@@ -56,6 +56,7 @@ class LcarsButton(LcarsWidget):
 
         self.image = image
         self.colour = colour
+        self.size = size
         LcarsWidget.__init__(self, colour, pos, size)
         self.applyColour(colour)
         self.highlighted = False
@@ -64,7 +65,8 @@ class LcarsButton(LcarsWidget):
     def handleEvent(self, event, clock):
         handled = False
         
-        if (event.type == MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos)):
+        if (event.type == MOUSEBUTTONDOWN and\
+          self.rect.collidepoint(event.pos)):
             self.applyColour(colours.WHITE)
             self.highlighted = True
             self.beep.play()
@@ -80,7 +82,8 @@ class LcarsButton(LcarsWidget):
         return handled
         
 class LcarsText(LcarsWidget):
-    def __init__(self, colour, pos, message, size=1.0, background=None):
+    def __init__(self, colour, pos, message, size=1.0, 
+                 background=None, resolution=(480, 320)):
         self.colour = colour
         self.background = background
         self.font = Font("assets/swiss911.ttf", int(19.0 * size))
@@ -89,7 +92,7 @@ class LcarsText(LcarsWidget):
         # center the text if needed 
         if (pos[1] < 0):
             # Screen specific magic number below! 240 = half width
-            pos = (pos[0], 240 - self.image.get_rect().width / 2)
+            pos = (pos[0], resolution[0]/2 - self.image.get_rect().width/2)
             
         LcarsWidget.__init__(self, colour, pos, None)
 
@@ -97,7 +100,8 @@ class LcarsText(LcarsWidget):
         if (self.background == None):
             self.image = self.font.render(message, True, self.colour)
         else:
-            self.image = self.font.render(message, True, self.colour, self.background)
+            self.image = self.font.render(message, True, 
+                                          self.colour, self.background)
         
     def setText(self, newText):
         self.renderText(newText)
@@ -116,4 +120,3 @@ class LcarsTabBlock(LcarsWidget):
     def __init__(self, colour, pos):
         size = (160, 45)
         LcarsWidget.__init__(self, colour, pos, size)        
-        

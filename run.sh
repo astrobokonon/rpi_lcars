@@ -1,3 +1,4 @@
 #!/bin/sh
 cd app
-xinit /usr/bin/python lcars.py
+#xinit python lcars.py
+python lcars.py
