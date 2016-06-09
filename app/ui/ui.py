@@ -2,7 +2,7 @@ import pygame
 from pygame.locals import *
 
 class UserInterface:
-    def __init__(self, screen, resolution=(800,480), 
+    def __init__(self, screen, resolution=(480,320), 
                  ui_placement_mode=False, fps=60, dev_mode=False,
                  audio=(22050, -8, 1, 1024)):
         # init system
@@ -10,7 +10,8 @@ class UserInterface:
         pygame.font.init()
         pygame.init()
         
-        self.screenSurface = pygame.display.set_mode(resolution) #, pygame.FULLSCREEN)
+        #self.screenSurface = pygame.display.set_mode(resolution) #, pygame.FULLSCREEN)
+        self.screenSurface = pygame.display.set_mode(resolution, pygame.FULLSCREEN)
         self.fpsClock = pygame.time.Clock()
         self.fps = fps
         pygame.display.set_caption("LCARS")

@@ -88,7 +88,8 @@ class LcarsText(LcarsWidget):
         self.renderText(message)
         # center the text if needed 
         if (pos[1] < 0):
-            pos = (pos[0], 400 - self.image.get_rect().width / 2)
+            # Screen specific magic number below! 240 = half width
+            pos = (pos[0], 240 - self.image.get_rect().width / 2)
             
         LcarsWidget.__init__(self, colour, pos, None)
 

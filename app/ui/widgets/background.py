@@ -12,6 +12,8 @@ class LcarsBackground(LcarsWidget):
 class LcarsBackgroundImage(LcarsWidget):
     def __init__(self, image):
         self.image = pygame.image.load(image).convert()
+        # Screen specific scaling
+        self.image = pygame.transform.scale(self.image, (480, 320))
         LcarsWidget.__init__(self, None, (0,0), None)
     
     def update(self, screen):

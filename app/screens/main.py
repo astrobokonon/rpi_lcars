@@ -11,36 +11,40 @@ from ui.widgets.sprite import LcarsMoveToMouse
 
 class ScreenMain(LcarsScreen):
     def setup(self, all_sprites):
-        all_sprites.add(LcarsBackgroundImage("assets/lcars_screen_1b.png"),
+        all_sprites.add(LcarsBackgroundImage("assets/lcars_screen_1.png"),
                         layer=0)
         
         # panel text
-        all_sprites.add(LcarsText(colours.BLACK, (11, 52), "LCARS 105"),
+        all_sprites.add(LcarsText(colours.BLACK, (11, 25), "LCARS", size=0.9),
                         layer=1)
-        all_sprites.add(LcarsText(colours.ORANGE, (0, 135), "HOME AUTOMATION", 2),
+        all_sprites.add(LcarsText(colours.ORANGE, (0, 85), "WEATHER", size=2),
                         layer=1)
-        all_sprites.add(LcarsText(colours.BLACK, (183, 74), "LIGHTS"),
+        all_sprites.add(LcarsText(colours.BLACK, (183, 25), "TEMP", size=0.9),
                         layer=1)
-        all_sprites.add(LcarsText(colours.BLACK, (222, 57), "CAMERAS"),
+        all_sprites.add(LcarsText(colours.BLACK, (222, 25), "PRESS", size=0.9),
                         layer=1)
-        all_sprites.add(LcarsText(colours.BLACK, (372, 70), "ENERGY"),
+        all_sprites.add(LcarsText(colours.BLACK, (372, 25), "HUMI", size=0.9),
                         layer=1)
-        all_sprites.add(LcarsText(colours.BLACK, (444, 612), "192 168 0 3"),
-                        layer=1)
+#        all_sprites.add(LcarsText(colours.BLACK, (444, 612), "192 168 0 3"),
+#                        layer=1)
 
         # info text
-        all_sprites.add(LcarsText(colours.WHITE, (192, 174), "EVENT LOG:", 1.5),
+        all_sprites.add(LcarsText(colours.WHITE, (92, 174), "EVENT LOG:", 1.5),
                         layer=3)
-        all_sprites.add(LcarsText(colours.BLUE, (244, 174), "2 ALARM ZONES TRIGGERED", 1.5),
+        all_sprites.add(LcarsText(colours.BLUE, (144, 174), 
+                                  "2 ALARM ZONES TRIGGERED", 1.5),
                         layer=3)
-        all_sprites.add(LcarsText(colours.BLUE, (286, 174), "14.3 kWh USED YESTERDAY", 1.5),
+        all_sprites.add(LcarsText(colours.BLUE, (186, 174), 
+                                  "14.3 kWh USED YESTERDAY", 1.5),
                         layer=3)
-        all_sprites.add(LcarsText(colours.BLUE, (330, 174), "1.3 Tb DATA USED THIS MONTH", 1.5),
+        all_sprites.add(LcarsText(colours.BLUE, (230, 174), 
+                        "1.3 Tb DATA USED THIS MONTH", 1.5),
                         layer=3)
         self.info_text = all_sprites.get_sprites_from_layer(3)
 
         # date display
-        self.stardate = LcarsText(colours.BLUE, (12, 380), "STAR DATE 2711.05 17:54:32", 1.5)
+        self.stardate = LcarsText(colours.BLUE, (12, 250), 
+                                  "STAR DATE 2711.05 17:54:32", size=1.35)
         self.lastClockUpdate = 0
         all_sprites.add(self.stardate, layer=1)
 
