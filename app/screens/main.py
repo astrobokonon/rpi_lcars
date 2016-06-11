@@ -1,5 +1,6 @@
-from datetime import datetime
 import pygame
+import subprocess as sub
+from datetime import datetime
 from pygame.mixer import Sound
 
 from ui import colours
@@ -18,14 +19,28 @@ class ScreenMain(LcarsScreen):
         all_sprites.add(LcarsText((255, 204, 153), (-5, 55),
                                   "WEATHER", size=3), layer=1)
 
+        # Screen brightness
+        self.sbrightness = 500
+
         # date display
+        sDateFmt = "%d%m.%y %H:%M:%S"
+        sDate = "{}".format(datetime.now().strftime(sDateFmt))
         self.stardate = LcarsText(colours.BLUE, (55, 55),
-                                  "STAR DATE 2711.05 17:54:32", size=2.0)
+                                  sDate, size=2.0)
+#                                  "2711.05 17:54:32", size=2.0)
         self.lastClockUpdate = 0
         all_sprites.add(self.stardate, layer=1)
 
-        buttonOff = LcarsButton(colours.RED_BROWN, (5, 375), "SCREEN OFF",
+        buttonBri = LcarsButton((255, 204, 153), (5, 270), "BRIGHTER",
                                 self.logoutHandler)
+        buttonDim = LcarsButton((255, 153, 102), (5, 375), "DIMMER",
+                                self.logoutHandler)
+        buttonOff = LcarsButton((204, 102, 102), (50, 320), "SCREEN OFF",
+                                self.logoutHandler)
+
+        all_sprites.add(buttonBri, layer=4)
+        all_sprites.add(buttonDim, layer=4)
+        all_sprites.add(buttonOff, layer=4)
 
 #        all_sprites.add(LcarsText(colours.BLACK, (183, 25), "TEMP", size=0.9),
 #                        layer=1)
@@ -66,11 +81,11 @@ class ScreenMain(LcarsScreen):
                              buttrowpos[1] + butt1.size[0] + butt2.size[0] + butt3.size[0]),
                             "Power", self.cPowerHandler)
 
-        all_sprites.add(buttonOff, layer=4)
-        all_sprites.add(butt1, layer=4)
-        all_sprites.add(butt2, layer=4)
-        all_sprites.add(butt3, layer=4)
-        all_sprites.add(butt4, layer=4)
+
+        all_sprites.add(butt1, layer=5)
+        all_sprites.add(butt2, layer=5)
+        all_sprites.add(butt3, layer=5)
+        all_sprites.add(butt4, layer=5)
 
         # gadgets
 #        all_sprites.add(LcarsGifImage("assets/gadgets/fwscan.gif",
@@ -95,7 +110,7 @@ class ScreenMain(LcarsScreen):
     def update(self, screenSurface, fpsClock):
         if pygame.time.get_ticks() - self.lastClockUpdate > 1000:
             sDateFmt = "%d%m.%y %H:%M:%S"
-            sDate = "STAR DATE {}".format(datetime.now().strftime(sDateFmt))
+            sDate = "{}".format(datetime.now().strftime(sDateFmt))
             self.stardate.setText(sDate)
             self.lastClockUpdate = pygame.time.get_ticks()
         LcarsScreen.update(self, screenSurface, fpsClock)
@@ -114,6 +129,28 @@ class ScreenMain(LcarsScreen):
         if self.info_text[0].visible:
             for sprite in self.info_text:
                 sprite.visible = False
+
+    def screenBrighter(self):
+        try:
+            self.sbrightness += 50
+            if self.sbrightness < 10:
+                self.sbrightness = 10
+            if self.sbrightness > 1023:
+                self.sbrightness = 1023
+            sub.call(['gpio', '-g', 'pwm', '18', self.sbrightness])
+        except OSError:
+            pass
+
+    def screenDimmer(self):
+        try:
+            self.sbrightness -= 50
+            if self.sbrightness < 10:
+                self.sbrightness = 10
+            if self.sbrightness > 1023:
+                self.sbrightness = 1023
+            sub.call(['gpio', '-g', 'pwm', '18', self.sbrightness])
+        except OSError:
+            pass
 
     def cTempHandler(self, item, event, clock):
         self.hideInfoText()
