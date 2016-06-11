@@ -32,9 +32,9 @@ class ScreenMain(LcarsScreen):
         all_sprites.add(self.stardate, layer=1)
 
         buttonBri = LcarsButton((255, 204, 153), (5, 270), "BRIGHTER",
-                                self.logoutHandler)
+                                self.screenBrighterHandler)
         buttonDim = LcarsButton((255, 153, 102), (5, 375), "DIMMER",
-                                self.logoutHandler)
+                                self.screenDimmerHandler)
         buttonOff = LcarsButton((204, 102, 102), (50, 320), "SCREEN OFF",
                                 self.logoutHandler)
 
@@ -130,25 +130,25 @@ class ScreenMain(LcarsScreen):
             for sprite in self.info_text:
                 sprite.visible = False
 
-    def screenBrighter(self):
+    def screenBrighterHandler(self, item, event, clock):
         try:
-            self.sbrightness += 50
+            self.sbrightness += 150
             if self.sbrightness < 10:
                 self.sbrightness = 10
             if self.sbrightness > 1023:
                 self.sbrightness = 1023
-            sub.call(['gpio', '-g', 'pwm', '18', self.sbrightness])
+            sub.call(['gpio', '-g', 'pwm', '18', str(self.sbrightness)])
         except OSError:
             pass
 
-    def screenDimmer(self):
+    def screenDimmerHandler(self, item, event, clock):
         try:
-            self.sbrightness -= 50
+            self.sbrightness -= 150
             if self.sbrightness < 10:
                 self.sbrightness = 10
             if self.sbrightness > 1023:
                 self.sbrightness = 1023
-            sub.call(['gpio', '-g', 'pwm', '18', self.sbrightness])
+            sub.call(['gpio', '-g', 'pwm', '18', str(self.sbrightness)])
         except OSError:
             pass
 
