@@ -69,7 +69,8 @@ class LcarsButton(LcarsWidget):
           self.rect.collidepoint(event.pos)):
             self.applyColour(colours.WHITE)
             self.highlighted = True
-            self.beep.play()
+            # NOTE: Should put the sounds behind a global/config param
+#            self.beep.play()
             handled = True
 
         if (event.type == MOUSEBUTTONUP and self.highlighted):
