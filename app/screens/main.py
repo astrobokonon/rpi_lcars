@@ -27,7 +27,6 @@ class ScreenMain(LcarsScreen):
         sDate = "{}".format(datetime.now().strftime(sDateFmt))
         self.stardate = LcarsText(colours.BLUE, (55, 55),
                                   sDate, size=2.0)
-#                                  "2711.05 17:54:32", size=2.0)
         self.lastClockUpdate = 0
         all_sprites.add(self.stardate, layer=1)
 
@@ -51,22 +50,20 @@ class ScreenMain(LcarsScreen):
 #        all_sprites.add(LcarsText(colours.BLACK, (444, 612), "192 168 0 3"),
 #                        layer=1)
 
-        # info text
-        all_sprites.add(LcarsText(colours.WHITE, (130, 65),
-                                  "CURRENT WEATHER:", 1.5), layer=3)
-        all_sprites.add(LcarsText(colours.BLUE, (160, 65),
-                                  "TEMPERATURE XX C / XX F", 1.5), layer=3)
-        all_sprites.add(LcarsText(colours.BLUE, (190, 65),
-                                  "HUMIDITY XX%", 1.5), layer=3)
-        all_sprites.add(LcarsText(colours.BLUE, (220, 65),
-                        "PRESSURE XXXX mB / XX.XX mm Hg", 1.5), layer=3)
-        all_sprites.add(LcarsText(colours.BLUE, (250, 65),
-                        "STATION BATTERY X.XXX V", 1.5), layer=3)
+        # Section/Parameter ID Text
+        self.sectionText = LcarsText((255, 204, 153), (120, 55),
+                                     "TEMPERATURE:", 3.)
+        all_sprites.add(self.sectionText, layer=4)
+
+        # Section Value Text
+        self.paramValueText = LcarsText(colours.BLUE, (170, -1),
+                                        "XX C / XX F", 4.5)
+        all_sprites.add(self.paramValueText, layer=3)
         self.info_text = all_sprites.get_sprites_from_layer(3)
 
         # buttons
 
-        buttrowpos = (120, 65)
+        buttrowpos = (270, 65)
         butt1 = LcarsButton(colours.BEIGE, buttrowpos, "Temperature",
                             self.cTempHandler)
         butt2 = LcarsButton(colours.PURPLE,
@@ -125,10 +122,10 @@ class ScreenMain(LcarsScreen):
         if event.type == pygame.MOUSEBUTTONUP:
             return False
 
-    def hideInfoText(self):
-        if self.info_text[0].visible:
-            for sprite in self.info_text:
-                sprite.visible = False
+#    def hideInfoText(self):
+#        if self.info_text[0].visible:
+#            for sprite in self.info_text:
+#                sprite.visible = False
 
     def screenBrighterHandler(self, item, event, clock):
         try:
@@ -153,28 +150,20 @@ class ScreenMain(LcarsScreen):
             pass
 
     def cTempHandler(self, item, event, clock):
-        self.hideInfoText()
-        self.sensor_gadget.visible = False
-        self.dashboard.visible = True
-        self.weather.visible = False
+        self.sectionText.setText("TEMPERATURE:")
+        self.paramValueText.setText("XX C / XX F")
 
     def cPressHandler(self, item, event, clock):
-        self.hideInfoText()
-        self.sensor_gadget.visible = True
-        self.dashboard.visible = False
-        self.weather.visible = False
+        self.sectionText.setText("PRESSURE:")
+        self.paramValueText.setText("XXXX mB / XX.XX mmHg")
 
     def cHumiHandler(self, item, event, clock):
-        self.hideInfoText()
-        self.sensor_gadget.visible = False
-        self.dashboard.visible = False
-        self.weather.visible = True
+        self.sectionText.setText("HUMIDITY:")
+        self.paramValueText.setText("XX %")
 
     def cPowerHandler(self, item, event, clock):
-        self.hideInfoText()
-        self.sensor_gadget.visible = True
-        self.dashboard.visible = False
-        self.weather.visible = False
+        self.sectionText.setText("STATION POWER:")
+        self.paramValueText.setText("X.XXX / X.XXX V")
 
     def logoutHandler(self, item, event, clock):
         from screens.blanker import ScreenBlanker
