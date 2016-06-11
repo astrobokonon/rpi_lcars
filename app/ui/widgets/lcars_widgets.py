@@ -46,7 +46,7 @@ class LcarsTab(LcarsWidget):
 class LcarsButton(LcarsWidget):
     def __init__(self, colour, pos, text, handler=None):
         self.handler = handler
-        image = pygame.image.load("assets/button.png").convert()
+        image = pygame.image.load("assets/betterbutton.png").convert()
         size = (image.get_rect().width, image.get_rect().height)
         font = Font("assets/swiss911.ttf", 19)
         textImage = font.render(text, False, colours.BLACK)
