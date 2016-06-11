@@ -14,7 +14,7 @@ class ScreenBlanker(LcarsScreen):
         all_sprites.add(LcarsBackgroundImage("assets/blank.png"),
                         layer=0)
         try:
-            sub.call(['gpio', '-g pwm 18 0'])
+            sub.call(['gpio', '-g', 'pwm', '18', '0'])
         except OSError:
             pass
         self.attempts = 0
@@ -24,7 +24,7 @@ class ScreenBlanker(LcarsScreen):
         LcarsScreen.handleEvents(self, event, fpsClock)
         if event.type == pygame.MOUSEBUTTONDOWN:
                 try:
-                    sub.call(['gpio', '-g pwm 18 1023'])
+		    sub.call(['gpio', '-g', 'pwm', '18', '1023'])
                 except OSError:
                     pass
                 from screens.main import ScreenMain
