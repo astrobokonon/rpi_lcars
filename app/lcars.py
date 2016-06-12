@@ -13,7 +13,7 @@ DEV_MODE = True
 if __name__ == "__main__":
     # Set the screen brightness to midrange to start with
     try:
-        sub.call(['gpio', '-g', 'pwm', '18', '500'])
+        sub.call(['gpio', '-g', 'pwm', '18', '800'])
     except OSError:
         pass
 #    firstScreen = ScreenAuthorize()

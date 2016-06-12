@@ -1,7 +1,10 @@
 import pygame
+import numpy as np
 import subprocess as sub
 from datetime import datetime
 from pygame.mixer import Sound
+
+import paho.mqtt.client as mqtt
 
 from ui import colours
 from ui.widgets.background import LcarsBackgroundImage, LcarsImage
@@ -10,8 +13,36 @@ from ui.widgets.lcars_widgets import LcarsText, LcarsButton
 from ui.widgets.screen import LcarsScreen
 
 
+def CtoF(tempy):
+    """
+    Convert Celcius to Fahrenheit
+    """
+    ft = (np.float(tempy)*(9./5.) + 32.)
+    return ft
+
+
 class ScreenMain(LcarsScreen):
     def setup(self, all_sprites):
+        # Weather parameters
+        self.temperature = -9999
+        self.pressure = -9999
+        self.humidity = -9999
+        self.battery = -9999
+        self.load = -9999
+        self.timestamp = -9999
+
+        # Local (intranet) MQTT server setup; do this first so we can start
+        #   with the current values already there if all is well with MQTT
+        self.client = mqtt.Client()
+        self.client.on_connect = self.on_connect
+        self.client.on_message = self.on_message
+        self.client.connect("192.168.1.66", 1883, 60)
+
+        # Non-blocking call that processes network traffic, dispatches
+        #   callbacks and handles reconnecting.  Must call client.loop_stop()
+        #   when you're done with stuff.
+        self.client.loop_start()
+
         all_sprites.add(LcarsBackgroundImage("assets/mainscreen.png"),
                         layer=0)
 
@@ -55,14 +86,19 @@ class ScreenMain(LcarsScreen):
                                      "TEMPERATURE:", 3.)
         all_sprites.add(self.sectionText, layer=4)
 
-        # Section Value Text
+        # Section Value Text.  If the temperature isn't nuts, it's probably
+        #   a good enough value to display so start with that.
         self.paramValueText = LcarsText(colours.BLUE, (170, -1),
-                                        "XX C / XX F", 4.5)
+                                        "XX.X C|XX.X F", 4.5)
+        if self.temperature != -9999:
+            dStr = "%02.1f C | %02.1f F" % (self.temperature,
+                                            CtoF(self.temperature))
+            self.paramValueText.setText(dStr)
+
         all_sprites.add(self.paramValueText, layer=3)
         self.info_text = all_sprites.get_sprites_from_layer(3)
 
         # buttons
-
         buttrowpos = (270, 65)
         butt1 = LcarsButton(colours.BEIGE, buttrowpos, "Temperature",
                             self.cTempHandler)
@@ -77,7 +113,6 @@ class ScreenMain(LcarsScreen):
                             (buttrowpos[0],
                              buttrowpos[1] + butt1.size[0] + butt2.size[0] + butt3.size[0]),
                             "Power", self.cPowerHandler)
-
 
         all_sprites.add(butt1, layer=5)
         all_sprites.add(butt2, layer=5)
@@ -122,11 +157,6 @@ class ScreenMain(LcarsScreen):
         if event.type == pygame.MOUSEBUTTONUP:
             return False
 
-#    def hideInfoText(self):
-#        if self.info_text[0].visible:
-#            for sprite in self.info_text:
-#                sprite.visible = False
-
     def screenBrighterHandler(self, item, event, clock):
         try:
             self.sbrightness += 150
@@ -151,21 +181,56 @@ class ScreenMain(LcarsScreen):
 
     def cTempHandler(self, item, event, clock):
         self.sectionText.setText("TEMPERATURE:")
-        self.paramValueText.setText("XX C / XX F")
+        dStr = "%02.1f C | %02.1f F" % (self.temperature,
+                                        CtoF(self.temperature))
+        self.paramValueText.setText(dStr)
 
     def cPressHandler(self, item, event, clock):
         self.sectionText.setText("PRESSURE:")
-        self.paramValueText.setText("XXXX mB / XX.XX mmHg")
+        dStr = "%04.2f mB" % (self.pressure)
+        self.paramValueText.setText(dStr)
 
     def cHumiHandler(self, item, event, clock):
         self.sectionText.setText("HUMIDITY:")
-        self.paramValueText.setText("XX %")
+        dStr = "%03.0f %%" % (self.humidity)
+        self.paramValueText.setText(dStr)
 
     def cPowerHandler(self, item, event, clock):
         self.sectionText.setText("STATION POWER:")
-        self.paramValueText.setText("X.XXX / X.XXX V")
+        dStr = "%01.2f / %02.1f V" % (self.battery, self.load)
+        self.paramValueText.setText(dStr)
 
     def logoutHandler(self, item, event, clock):
         from screens.blanker import ScreenBlanker
+        self.client.loop_stop()
         self.loadScreen(ScreenBlanker())
 
+    def on_connect(self, client, userdata, flags, rc):
+        """
+        Callback for when the client receives a CONNACK response from server.
+        """
+        print("Connected with result code "+str(rc))
+
+        # Subscribing in on_connect() means that if we lose the connection and
+        #   reconnect then subscriptions will be renewed.
+        #   The character '#' is a wildcard meaning all.
+        client.subscribe("station/#")
+
+    def on_message(self, client, userdata, msg):
+        """
+        Callback for when a PUBLISH message is received from the server.
+        """
+#        print(msg.topic+" "+str(msg.payload))
+
+        if msg.topic.find("temperature") > -1:
+            self.temperature = np.float(msg.payload)
+        if msg.topic.find("pressure") > -1:
+            self.pressure = np.float(msg.payload)
+        if msg.topic.find("humidity") > -1:
+            self.humidity = np.float(msg.payload)
+        if msg.topic.find("battery") > -1:
+            self.battery = np.float(msg.payload)
+        if msg.topic.find("load") > -1:
+            self.load = np.float(msg.payload)
+        if msg.topic.find("timestamp") > -1:
+            self.timestamp = np.int(msg.payload)
