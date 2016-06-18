@@ -69,8 +69,8 @@ class ScreenMain(LcarsScreen):
         all_sprites.add(self.stardate, layer=1)
 
         # Section/Parameter ID Text
-        self.sensorTimestampText = LcarsText((0, 0, 0), (104, 304),
-                                             "LAST UPDATE: ", 0.60)
+        self.sensorTimestampText = LcarsText((0, 0, 0), (95, 275),
+                                             "LAST UPDATE: ", 1.0)
         self.sectionText = LcarsText((255, 204, 153), (120, 55),
                                      "TEMPERATURE:", 3.)
         all_sprites.add(self.sensorTimestampText, layer=4)
@@ -86,24 +86,27 @@ class ScreenMain(LcarsScreen):
 
         # buttons
         buttrowpos = (270, 65)
-        butt1 = LcarsButton(colours.BEIGE, buttrowpos, "Temperature",
-                            self.cTempHandler)
-        butt2 = LcarsButton(colours.PURPLE,
-                            (buttrowpos[0], buttrowpos[1] + butt1.size[0]),
-                            "Pressure", self.cPressHandler)
-        butt3 = LcarsButton(colours.PURPLE,
-                            (buttrowpos[0],
-                             buttrowpos[1] + butt1.size[0] + butt2.size[0]),
-                            "Humidity", self.cHumiHandler)
-        butt4 = LcarsButton(colours.PURPLE,
-                            (buttrowpos[0],
-                             buttrowpos[1] + butt1.size[0] + butt2.size[0] + butt3.size[0]),
-                            "Power", self.cPowerHandler)
+        self.butt1 = LcarsButton((255, 153, 0), buttrowpos, "Temperature",
+                                 self.cTempHandler)
+        self.butt2 = LcarsButton((255, 153, 102),
+                                 (buttrowpos[0],
+                                  buttrowpos[1] + self.butt1.size[0]),
+                                 "Pressure", self.cPressHandler)
+        self.butt3 = LcarsButton((255, 204, 153),
+                                 (buttrowpos[0],
+                                  buttrowpos[1] + self.butt1.size[0] +
+                                  self.butt2.size[0]),
+                                 "Humidity", self.cHumiHandler)
+        self.butt4 = LcarsButton((255, 204, 102),
+                                 (buttrowpos[0],
+                                  buttrowpos[1] + self.butt1.size[0] +
+                                  self.butt2.size[0] + self.butt3.size[0]),
+                                 "Power", self.cPowerHandler)
 
-        all_sprites.add(butt1, layer=5)
-        all_sprites.add(butt2, layer=5)
-        all_sprites.add(butt3, layer=5)
-        all_sprites.add(butt4, layer=5)
+        all_sprites.add(self.butt1, layer=5)
+        all_sprites.add(self.butt2, layer=5)
+        all_sprites.add(self.butt3, layer=5)
+        all_sprites.add(self.butt4, layer=5)
 
         # Local (intranet) MQTT server setup; Hopefully we can can start
         #   with the current values already there if all is well with MQTT
@@ -122,6 +125,13 @@ class ScreenMain(LcarsScreen):
             # Note: We need to explicitly update the strings since they're
             #   caught in the time loop and may lay
             self.updateDisplayedSensorStrings()
+
+        # Highlight the default choice so we know where we are and trigger
+        self.butt1.changeColor(colours.WHITE)
+        self.butt2.changeColor(self.butt2.inactiveColor)
+        self.butt3.changeColor(self.butt3.inactiveColor)
+        self.butt4.changeColor(self.butt4.inactiveColor)
+
 
     def update(self, screenSurface, fpsClock):
         if pygame.time.get_ticks() - self.lastClockUpdate > 1000:
@@ -174,24 +184,40 @@ class ScreenMain(LcarsScreen):
         self.displayedValue = "Temp"
         self.paramStr = self.tStr
         self.updateDisplayedSensorStrings()
+        self.butt1.changeColor(colours.WHITE)
+        self.butt2.changeColor(self.butt2.inactiveColor)
+        self.butt3.changeColor(self.butt3.inactiveColor)
+        self.butt4.changeColor(self.butt4.inactiveColor)
 
     def cPressHandler(self, item, event, clock):
         self.sectionText.setText("PRESSURE:")
         self.displayedValue = "Pre"
         self.paramStr = self.pStr
         self.updateDisplayedSensorStrings()
+        self.butt1.changeColor(self.butt1.inactiveColor)
+        self.butt2.changeColor(colours.WHITE)
+        self.butt3.changeColor(self.butt3.inactiveColor)
+        self.butt4.changeColor(self.butt4.inactiveColor)
 
     def cHumiHandler(self, item, event, clock):
         self.sectionText.setText("HUMIDITY:")
         self.displayedValue = "Humi"
         self.paramStr = self.hStr
         self.updateDisplayedSensorStrings()
+        self.butt1.changeColor(self.butt1.inactiveColor)
+        self.butt2.changeColor(self.butt2.inactiveColor)
+        self.butt3.changeColor(colours.WHITE)
+        self.butt4.changeColor(self.butt4.inactiveColor)
 
     def cPowerHandler(self, item, event, clock):
         self.sectionText.setText("STATION POWER:")
         self.displayedValue = "Powr"
         self.paramStr = self.pwrStr
         self.updateDisplayedSensorStrings()
+        self.butt1.changeColor(self.butt1.inactiveColor)
+        self.butt2.changeColor(self.butt2.inactiveColor)
+        self.butt3.changeColor(self.butt3.inactiveColor)
+        self.butt4.changeColor(colours.WHITE)
 
     def logoutHandler(self, item, event, clock):
         from screens.blanker import ScreenBlanker
