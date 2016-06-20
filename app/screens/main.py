@@ -152,7 +152,7 @@ class ScreenMain(LcarsScreen):
         # Update the heartbeat indicator(s)
         self.beatCounterDT = (dt.datetime.now() - self.timestampDT)
         self.beatCounter = self.beatCounterDT.total_seconds()
-        print self.beatCounter, self.beatWarningTime
+#        print self.beatCounter, self.beatWarningTime
         if self.beatCounter > self.beatWarningTime:
             self.beatColor = (255, 0, 0)
         else:
