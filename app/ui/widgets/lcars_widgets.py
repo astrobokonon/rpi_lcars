@@ -29,6 +29,7 @@ class LcarsElbow(LcarsWidget):
         LcarsWidget.__init__(self, colour, pos, size)
         self.applyColour(colour)
 
+
 class LcarsTab(LcarsWidget):
     STYLE_LEFT = 1
     STYLE_RIGHT = 2
@@ -42,6 +43,7 @@ class LcarsTab(LcarsWidget):
         LcarsWidget.__init__(self, colour, pos, size)
         self.image = image
         self.applyColour(colour)
+
 
 class LcarsButton(LcarsWidget):
     def __init__(self, colour, pos, text, handler=None):
@@ -60,7 +62,7 @@ class LcarsButton(LcarsWidget):
         LcarsWidget.__init__(self, colour, pos, size)
         self.applyColour(colour)
         self.highlighted = False
-        self.beep = Sound("assets/audio/panel/202.wav")
+#        self.beep = Sound("assets/audio/panel/202.wav")
         self.inactiveColor = colour
 
     def changeColor(self, color):
@@ -69,8 +71,8 @@ class LcarsButton(LcarsWidget):
     def handleEvent(self, event, clock):
         handled = False
 
-        if (event.type == MOUSEBUTTONDOWN and\
-          self.rect.collidepoint(event.pos)):
+        if (event.type == MOUSEBUTTONDOWN and
+           self.rect.collidepoint(event.pos)):
             self.applyColour(colours.WHITE)
             self.highlighted = True
             # NOTE: Should put the sounds behind a global/config param
@@ -85,6 +87,7 @@ class LcarsButton(LcarsWidget):
 
         LcarsWidget.handleEvent(self, event, clock)
         return handled
+
 
 class LcarsText(LcarsWidget):
     def __init__(self, colour, pos, message, size=1.0,
@@ -102,7 +105,7 @@ class LcarsText(LcarsWidget):
         LcarsWidget.__init__(self, colour, pos, None)
 
     def renderText(self, message):
-        if (self.background == None):
+        if (self.background is None):
             self.image = self.font.render(message, True, self.colour)
         else:
             self.image = self.font.render(message, True,
@@ -111,15 +114,18 @@ class LcarsText(LcarsWidget):
     def setText(self, newText):
         self.renderText(newText)
 
+
 class LcarsBlockLarge(LcarsWidget):
     def __init__(self, colour, pos):
         size = (100, 70)
         LcarsWidget.__init__(self, colour, pos, size)
 
+
 class LcarsBlockSmall(LcarsWidget):
     def __init__(self, colour, pos):
         size = (100, 20)
         LcarsWidget.__init__(self, colour, pos, size)
+
 
 class LcarsTabBlock(LcarsWidget):
     def __init__(self, colour, pos):

@@ -1,6 +1,7 @@
 import time
 import pygame
 import numpy as np
+import datetime as dt
 import subprocess as sub
 from datetime import datetime
 from pygame.mixer import Sound
@@ -38,6 +39,8 @@ class ScreenMain(LcarsScreen):
         self.tsStr = None
         self.displayedValue = "Temp"
         self.paramStr = self.tStr
+        self.timestampDT = dt.datetime.now()
+        self.beatWarningTime = 10.*60.
 
         # Background image/overall layout
         all_sprites.add(LcarsBackgroundImage("assets/mainscreen.png"),
@@ -45,6 +48,7 @@ class ScreenMain(LcarsScreen):
 
         # Screen brightness we start from
         self.sbrightness = 800
+
         # Screen control buttons
         buttonBri = LcarsButton((255, 204, 153), (5, 270), "BRIGHTER",
                                 self.screenBrighterHandler)
@@ -132,26 +136,34 @@ class ScreenMain(LcarsScreen):
         self.butt3.changeColor(self.butt3.inactiveColor)
         self.butt4.changeColor(self.butt4.inactiveColor)
 
-
     def update(self, screenSurface, fpsClock):
         if pygame.time.get_ticks() - self.lastClockUpdate > 1000:
             sDateFmt = "%d%m.%y %H:%M:%S"
             sDate = "{}".format(datetime.now().strftime(sDateFmt))
             self.stardate.setText(sDate)
 
-# Not needed?
+            # Not needed?
             # While we're at it, update the other strings that
             #   could have changed (param value and last update time)
 #            self.updateDisplayedSensorStrings()
 
             self.lastClockUpdate = pygame.time.get_ticks()
         LcarsScreen.update(self, screenSurface, fpsClock)
+        # Update the heartbeat indicator(s)
+        self.beatCounterDT = (dt.datetime.now() - self.timestampDT)
+        self.beatCounter = self.beatCounterDT.total_seconds()
+        print self.beatCounter, self.beatWarningTime
+        if self.beatCounter > self.beatWarningTime:
+            self.beatColor = (255, 0, 0)
+        else:
+            self.beatColor = (0, 255, 0)
+        self.curHeartbeat(screenSurface)
 
     def handleEvents(self, event, fpsClock):
         LcarsScreen.handleEvents(self, event, fpsClock)
 
         if event.type == pygame.MOUSEBUTTONDOWN:
-            #self.beep1.play()
+#            self.beep1.play()
             pass
 
         if event.type == pygame.MOUSEBUTTONUP:
@@ -233,6 +245,9 @@ class ScreenMain(LcarsScreen):
         """
         self.paramValueText.setText(self.paramStr)
         self.sensorTimestampText.setText(self.tsStr)
+
+    def curHeartbeat(self, screenSurface):
+        pygame.draw.rect(screenSurface, self.beatColor, (211, 100, 50, 12), 0)
 
     def on_connect(self, client, userdata, flags, rc):
         """
