@@ -41,6 +41,13 @@ class ScreenMain(LcarsScreen):
         self.paramStr = self.tStr
         self.timestampDT = dt.datetime.now()
         self.beatWarningTime = 10.*60.
+        self.runningCam = False
+        self.cmdCamGo = ['sudo', '-H', '-u', 'pi',
+                         'adafruit-io', 'camera', 'start',
+                         '-f', 'camera_feed', '-m', 'false',
+                         '-r', '5', '-v', 'true']
+        self.cmdCamStop = ['sudo', '-H', '-u', 'pi',
+                           'adafruit-io', 'camera', 'stop']
 
         # Background image/overall layout
         all_sprites.add(LcarsBackgroundImage("assets/mainscreen.png"),
@@ -75,33 +82,36 @@ class ScreenMain(LcarsScreen):
         # Section/Parameter ID Text
         self.sensorTimestampText = LcarsText((0, 0, 0), (95, 275),
                                              "LAST UPDATE: ", 1.0)
-        self.sectionText = LcarsText((255, 204, 153), (120, 55),
-                                     "TEMPERATURE:", 3.)
+#        self.sectionText = LcarsText((255, 204, 153), (120, 55),
+#                                     "TEMPERATURE:", 3.)
         all_sprites.add(self.sensorTimestampText, layer=4)
-        all_sprites.add(self.sectionText, layer=4)
+#        all_sprites.add(self.sectionText, layer=4)
 
         # Section Value Text.  If the temperature isn't nuts, it's probably
         #   a good enough value to display so start with that.
-        self.paramValueText = LcarsText(colours.BLUE, (170, -1),
+        self.paramValueText = LcarsText((255, 204, 153), (170, -1),
                                         "XX.X C|XX.X F", 4.5)
 
         all_sprites.add(self.paramValueText, layer=3)
         self.info_text = all_sprites.get_sprites_from_layer(3)
 
         # buttons
-        buttrowpos = (270, 65)
-        self.butt1 = LcarsButton((255, 153, 0), buttrowpos, "Temperature",
+        # (Bottom)
+        #buttrowpos = (270, 65)
+        # (Top)
+        buttrowpos = (125, 55)
+        self.butt1 = LcarsButton(colours.PURPLE, buttrowpos, "Temperature",
                                  self.cTempHandler)
-        self.butt2 = LcarsButton((255, 153, 102),
+        self.butt2 = LcarsButton(colours.PURPLE,
                                  (buttrowpos[0],
                                   buttrowpos[1] + self.butt1.size[0]),
                                  "Pressure", self.cPressHandler)
-        self.butt3 = LcarsButton((255, 204, 153),
+        self.butt3 = LcarsButton(colours.PURPLE,
                                  (buttrowpos[0],
                                   buttrowpos[1] + self.butt1.size[0] +
                                   self.butt2.size[0]),
                                  "Humidity", self.cHumiHandler)
-        self.butt4 = LcarsButton((255, 204, 102),
+        self.butt4 = LcarsButton(colours.PURPLE,
                                  (buttrowpos[0],
                                   buttrowpos[1] + self.butt1.size[0] +
                                   self.butt2.size[0] + self.butt3.size[0]),
@@ -112,12 +122,17 @@ class ScreenMain(LcarsScreen):
         all_sprites.add(self.butt3, layer=5)
         all_sprites.add(self.butt4, layer=5)
 
+        campos = (270, 320)
+        self.buttcam = LcarsButton((204, 102, 102), campos, "KITTY CAM",
+                                   self.camHandler)
+        all_sprites.add(self.buttcam, layer=4)
+
         # Local (intranet) MQTT server setup; Hopefully we can can start
         #   with the current values already there if all is well with MQTT
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
-        self.client.connect("192.168.1.66", 1883, 60)
+        self.client.connect("localhost", 1883, 60)
 
         # Non-blocking call that processes network traffic, dispatches
         #   callbacks and handles reconnecting.  Must call client.loop_stop()
@@ -169,6 +184,17 @@ class ScreenMain(LcarsScreen):
         if event.type == pygame.MOUSEBUTTONUP:
             return False
 
+    def camHandler(self, item, event, clock):
+        try:
+            if self.runningCam is False:
+                self.runningCam = True
+                sub.call(self.cmdCamGo)
+            else:
+                self.runningCam = False
+                sub.call(self.cmdCamStop)
+        except OSError:
+            pass
+
     def screenBrighterHandler(self, item, event, clock):
         try:
             self.sbrightness += 150
@@ -192,7 +218,7 @@ class ScreenMain(LcarsScreen):
             pass
 
     def cTempHandler(self, item, event, clock):
-        self.sectionText.setText("TEMPERATURE:")
+#        self.sectionText.setText("TEMPERATURE:")
         self.displayedValue = "Temp"
         self.paramStr = self.tStr
         self.updateDisplayedSensorStrings()
@@ -202,7 +228,7 @@ class ScreenMain(LcarsScreen):
         self.butt4.changeColor(self.butt4.inactiveColor)
 
     def cPressHandler(self, item, event, clock):
-        self.sectionText.setText("PRESSURE:")
+#        self.sectionText.setText("PRESSURE:")
         self.displayedValue = "Pre"
         self.paramStr = self.pStr
         self.updateDisplayedSensorStrings()
@@ -212,7 +238,7 @@ class ScreenMain(LcarsScreen):
         self.butt4.changeColor(self.butt4.inactiveColor)
 
     def cHumiHandler(self, item, event, clock):
-        self.sectionText.setText("HUMIDITY:")
+#        self.sectionText.setText("HUMIDITY:")
         self.displayedValue = "Humi"
         self.paramStr = self.hStr
         self.updateDisplayedSensorStrings()
@@ -222,7 +248,7 @@ class ScreenMain(LcarsScreen):
         self.butt4.changeColor(self.butt4.inactiveColor)
 
     def cPowerHandler(self, item, event, clock):
-        self.sectionText.setText("STATION POWER:")
+#        self.sectionText.setText("STATION POWER:")
         self.displayedValue = "Powr"
         self.paramStr = self.pwrStr
         self.updateDisplayedSensorStrings()
