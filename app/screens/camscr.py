@@ -25,20 +25,6 @@ def CtoF(tempy):
 
 class ScreenMain(LcarsScreen):
     def setup(self, all_sprites):
-        # Weather parameters
-        self.temperature = -9999
-        self.tStr = None
-        self.pressure = -9999
-        self.pStr = None
-        self.humidity = -9999
-        self.hStr = None
-        self.battery = -9999
-        self.load = -9999
-        self.pwrStr = None
-        self.timestamp = -9999
-        self.tsStr = None
-        self.displayedValue = "Temp"
-        self.paramStr = self.tStr
         self.timestampDT = dt.datetime.now()
         self.beatWarningTime = 10.*60.
         self.runningCam = False
@@ -50,7 +36,7 @@ class ScreenMain(LcarsScreen):
                            'adafruit-io', 'camera', 'stop']
 
         # Background image/overall layout
-        all_sprites.add(LcarsBackgroundImage("assets/mainscreen.png"),
+        all_sprites.add(LcarsBackgroundImage("assets/camscreen.png"),
                         layer=0)
 
         # Screen brightness we start from
@@ -69,7 +55,7 @@ class ScreenMain(LcarsScreen):
 
         # Header text
         all_sprites.add(LcarsText((255, 204, 153), (-5, 55),
-                                  "WEATHER", size=3), layer=1)
+                                  "CAMERA", size=3), layer=1)
 
         # date display
         sDateFmt = "%d%m.%y %H:%M:%S"
@@ -90,37 +76,10 @@ class ScreenMain(LcarsScreen):
         # Section Value Text.  If the temperature isn't nuts, it's probably
         #   a good enough value to display so start with that.
         self.paramValueText = LcarsText((255, 204, 153), (170, -1),
-                                        "XX.X C|XX.X F", 4.5)
+                                        "CAMERA: STOPPED", 4.5)
 
         all_sprites.add(self.paramValueText, layer=3)
         self.info_text = all_sprites.get_sprites_from_layer(3)
-
-        # buttons
-        # (Bottom)
-        #buttrowpos = (270, 65)
-        # (Top)
-        buttrowpos = (125, 55)
-        self.butt1 = LcarsButton(colours.PURPLE, buttrowpos, "Temperature",
-                                 self.cTempHandler)
-        self.butt2 = LcarsButton(colours.PURPLE,
-                                 (buttrowpos[0],
-                                  buttrowpos[1] + self.butt1.size[0]),
-                                 "Pressure", self.cPressHandler)
-        self.butt3 = LcarsButton(colours.PURPLE,
-                                 (buttrowpos[0],
-                                  buttrowpos[1] + self.butt1.size[0] +
-                                  self.butt2.size[0]),
-                                 "Humidity", self.cHumiHandler)
-        self.butt4 = LcarsButton(colours.PURPLE,
-                                 (buttrowpos[0],
-                                  buttrowpos[1] + self.butt1.size[0] +
-                                  self.butt2.size[0] + self.butt3.size[0]),
-                                 "Power", self.cPowerHandler)
-
-        all_sprites.add(self.butt1, layer=5)
-        all_sprites.add(self.butt2, layer=5)
-        all_sprites.add(self.butt3, layer=5)
-        all_sprites.add(self.butt4, layer=5)
 
         campos = (270, 320)
         self.buttcam = LcarsButton((204, 102, 102), campos, "KITTY CAM",
@@ -139,30 +98,13 @@ class ScreenMain(LcarsScreen):
         #   when you're done with stuff.
         self.client.loop_start()
 
-        if self.temperature != -9999:
-            self.paramStr = self.tStr
-            # Note: We need to explicitly update the strings since they're
-            #   caught in the time loop and may lag
-            self.updateDisplayedSensorStrings()
-
-        # Highlight the default choice so we know where we are and trigger
-        self.butt1.changeColor(colours.WHITE)
-        self.butt2.changeColor(self.butt2.inactiveColor)
-        self.butt3.changeColor(self.butt3.inactiveColor)
-        self.butt4.changeColor(self.butt4.inactiveColor)
-
     def update(self, screenSurface, fpsClock):
         if pygame.time.get_ticks() - self.lastClockUpdate > 1000:
             sDateFmt = "%d%m.%y %H:%M:%S"
             sDate = "{}".format(datetime.now().strftime(sDateFmt))
             self.stardate.setText(sDate)
-
-            # Not needed?
-            # While we're at it, update the other strings that
-            #   could have changed (param value and last update time)
-#            self.updateDisplayedSensorStrings()
-
             self.lastClockUpdate = pygame.time.get_ticks()
+
         LcarsScreen.update(self, screenSurface, fpsClock)
         # Update the heartbeat indicator(s)
         self.beatCounterDT = (dt.datetime.now() - self.timestampDT)
@@ -217,46 +159,6 @@ class ScreenMain(LcarsScreen):
         except OSError:
             pass
 
-    def cTempHandler(self, item, event, clock):
-#        self.sectionText.setText("TEMPERATURE:")
-        self.displayedValue = "Temp"
-        self.paramStr = self.tStr
-        self.updateDisplayedSensorStrings()
-        self.butt1.changeColor(colours.WHITE)
-        self.butt2.changeColor(self.butt2.inactiveColor)
-        self.butt3.changeColor(self.butt3.inactiveColor)
-        self.butt4.changeColor(self.butt4.inactiveColor)
-
-    def cPressHandler(self, item, event, clock):
-#        self.sectionText.setText("PRESSURE:")
-        self.displayedValue = "Pre"
-        self.paramStr = self.pStr
-        self.updateDisplayedSensorStrings()
-        self.butt1.changeColor(self.butt1.inactiveColor)
-        self.butt2.changeColor(colours.WHITE)
-        self.butt3.changeColor(self.butt3.inactiveColor)
-        self.butt4.changeColor(self.butt4.inactiveColor)
-
-    def cHumiHandler(self, item, event, clock):
-#        self.sectionText.setText("HUMIDITY:")
-        self.displayedValue = "Humi"
-        self.paramStr = self.hStr
-        self.updateDisplayedSensorStrings()
-        self.butt1.changeColor(self.butt1.inactiveColor)
-        self.butt2.changeColor(self.butt2.inactiveColor)
-        self.butt3.changeColor(colours.WHITE)
-        self.butt4.changeColor(self.butt4.inactiveColor)
-
-    def cPowerHandler(self, item, event, clock):
-#        self.sectionText.setText("STATION POWER:")
-        self.displayedValue = "Powr"
-        self.paramStr = self.pwrStr
-        self.updateDisplayedSensorStrings()
-        self.butt1.changeColor(self.butt1.inactiveColor)
-        self.butt2.changeColor(self.butt2.inactiveColor)
-        self.butt3.changeColor(self.butt3.inactiveColor)
-        self.butt4.changeColor(colours.WHITE)
-
     def logoutHandler(self, item, event, clock):
         from screens.blanker import ScreenBlanker
         self.client.loop_stop()
@@ -264,13 +166,6 @@ class ScreenMain(LcarsScreen):
         self.client.disconnect()
 
         self.loadScreen(ScreenBlanker())
-
-    def updateDisplayedSensorStrings(self):
-        """
-        Update the sensor value and associated timestamp when demanded
-        """
-        self.paramValueText.setText(self.paramStr)
-        self.sensorTimestampText.setText(self.tsStr)
 
     def curHeartbeat(self, screenSurface):
         pygame.draw.rect(screenSurface, self.beatColor, (211, 100, 50, 12), 0)
@@ -292,43 +187,5 @@ class ScreenMain(LcarsScreen):
         """
 #        print(msg.topic+" "+str(msg.payload))
 
-        if msg.topic.find("temperature") > -1:
-            self.temperature = np.float(msg.payload)
-            self.tStr = "%02.1f C | %02.1f F" % (self.temperature,
-                                                 CtoF(self.temperature))
-            if self.displayedValue == "Temp":
-                self.paramStr = self.tStr
-            print "Update", self.tStr
-        if msg.topic.find("pressure") > -1:
-            self.pressure = np.float(msg.payload)
-            self.pStr = "%04.2f mB" % (self.pressure)
-            if self.displayedValue == "Pres":
-                self.paramStr = self.pStr
+        if msg.topic.find("camera") > -1:
             print "Update", self.pStr
-        elif msg.topic.find("humidity") > -1:
-            self.humidity = np.float(msg.payload)
-            self.hStr = "%03.0f %%" % (self.humidity)
-            if self.displayedValue == "Humi":
-                self.paramStr = self.hStr
-            print "Update", self.hStr
-        elif msg.topic.find("battery") > -1:
-            self.battery = np.float(msg.payload)
-            self.pwrStr = "%01.2f / %01.2f V" % (self.battery, self.load)
-            if self.displayedValue == "Powr":
-                self.paramStr = self.pwrStr
-            print "Update", self.pwrStr
-        elif msg.topic.find("load") > -1:
-            self.load = np.float(msg.payload)
-            self.pwrStr = "%01.2f / %01.2f V" % (self.battery, self.load)
-            if self.displayedValue == "Powr":
-                self.paramStr = self.pwrStr
-            print "Update", self.pwrStr
-        elif msg.topic.find("timestamp") > -1:
-            sDateFmt = "%d%m.%y %H:%M:%S"
-            self.timestamp = np.int(msg.payload)
-            self.timestampDT = datetime.fromtimestamp(self.timestamp)
-            sDate = "{}".format(self.timestampDT.strftime(sDateFmt))
-            self.tsStr = "Last Update: %s" % (sDate)
-            print "Update", self.tsStr
-
-        self.updateDisplayedSensorStrings()
