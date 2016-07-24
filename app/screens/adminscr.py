@@ -15,30 +15,8 @@ from ui.widgets.lcars_widgets import LcarsText, LcarsButton
 from ui.widgets.screen import LcarsScreen
 
 
-def CtoF(tempy):
-    """
-    Convert Celcius to Fahrenheit
-    """
-    ft = (np.float(tempy)*(9./5.) + 32.)
-    return ft
-
-
 class ScreenMain(LcarsScreen):
     def setup(self, all_sprites):
-        # Weather parameters
-        self.temperature = -9999
-        self.tStr = None
-        self.pressure = -9999
-        self.pStr = None
-        self.humidity = -9999
-        self.hStr = None
-        self.battery = -9999
-        self.load = -9999
-        self.pwrStr = None
-        self.timestamp = -9999
-        self.tsStr = None
-        self.displayedValue = "Temp"
-        self.paramStr = self.tStr
         self.timestampDT = dt.datetime.now()
         self.beatWarningTime = 10.*60.
         self.runningCam = False
@@ -50,7 +28,7 @@ class ScreenMain(LcarsScreen):
                            'adafruit-io', 'camera', 'stop']
 
         # Background image/overall layout
-        all_sprites.add(LcarsBackgroundImage("assets/mainscreen.png"),
+        all_sprites.add(LcarsBackgroundImage("assets/adminscreen.png"),
                         layer=0)
 
         # Screen brightness we start from
@@ -260,7 +238,7 @@ class ScreenMain(LcarsScreen):
     def logoutHandler(self, item, event, clock):
         from screens.blanker import ScreenBlanker
         self.client.loop_stop()
-        self.client.unsubscribe("Ostation/#")
+        self.client.unsubscribe("station/#")
         self.client.disconnect()
 
         self.loadScreen(ScreenBlanker())
@@ -273,7 +251,7 @@ class ScreenMain(LcarsScreen):
         self.sensorTimestampText.setText(self.tsStr)
 
     def curHeartbeat(self, screenSurface):
-        pygame.draw.rect(screenSurface, self.beatColor, (211, 99, 235, 14), 0)
+        pygame.draw.rect(screenSurface, self.beatColor, (211, 100, 50, 12), 0)
 
     def on_connect(self, client, userdata, flags, rc):
         """
@@ -284,7 +262,7 @@ class ScreenMain(LcarsScreen):
         # Subscribing in on_connect() means that if we lose the connection and
         #   reconnect then subscriptions will be renewed.
         #   The character '#' is a wildcard meaning all.
-        client.subscribe("Ostation/#")
+        client.subscribe("station/#")
 
     def on_message(self, client, userdata, msg):
         """
