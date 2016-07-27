@@ -1,6 +1,7 @@
 import pygame
 from pygame.locals import *
 
+
 class UserInterface:
     def __init__(self, screen, resolution=(480,320), 
                  ui_placement_mode=False, fps=60, dev_mode=False,

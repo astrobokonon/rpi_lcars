@@ -8,7 +8,7 @@ from pygame.mixer import Sound
 
 import paho.mqtt.client as mqtt
 
-from ui import colours
+from ui import colours, screenPWM
 from ui.widgets.background import LcarsBackgroundImage, LcarsImage
 from ui.widgets.gifimage import LcarsGifImage
 from ui.widgets.lcars_widgets import LcarsText, LcarsButton
@@ -45,7 +45,7 @@ class ScreenMain(LcarsScreen):
         self.cmdCamGo = ['sudo', '-H', '-u', 'pi',
                          'adafruit-io', 'camera', 'start',
                          '-f', 'camera_feed', '-m', 'false',
-                         '-r', '5', '-v', 'true']
+                         '-r', '5', '-v', 'false']
         self.cmdCamStop = ['sudo', '-H', '-u', 'pi',
                            'adafruit-io', 'camera', 'stop']
 
@@ -54,7 +54,7 @@ class ScreenMain(LcarsScreen):
                         layer=0)
 
         # Screen brightness we start from
-        self.sbrightness = 800
+        self.sbrightness = 0.5
 
         # Screen control buttons
         buttonBri = LcarsButton((255, 204, 153), (5, 270), "BRIGHTER",
@@ -197,23 +197,25 @@ class ScreenMain(LcarsScreen):
 
     def screenBrighterHandler(self, item, event, clock):
         try:
-            self.sbrightness += 150
-            if self.sbrightness < 10:
-                self.sbrightness = 10
-            if self.sbrightness > 1023:
-                self.sbrightness = 1023
-            sub.call(['gpio', '-g', 'pwm', '18', str(self.sbrightness)])
+            self.sbrightness += 0.1
+            if self.sbrightness < 0.1:
+                self.sbrightness = 0.1
+            if self.sbrightness > 1.0:
+                self.sbrightness = 1.0
+#            sub.call(['gpio', '-g', 'pwm', '18', str(self.sbrightness)])
+            screenPWM.screenPWM(self.sbrightness, pin=18)
         except OSError:
             pass
 
     def screenDimmerHandler(self, item, event, clock):
         try:
-            self.sbrightness -= 150
-            if self.sbrightness < 10:
-                self.sbrightness = 10
-            if self.sbrightness > 1023:
-                self.sbrightness = 1023
-            sub.call(['gpio', '-g', 'pwm', '18', str(self.sbrightness)])
+            self.sbrightness -= 0.1
+            if self.sbrightness < 0.1:
+                self.sbrightness = 0.1
+            if self.sbrightness > 1.0:
+                self.sbrightness = 1.0
+#            sub.call(['gpio', '-g', 'pwm', '18', str(self.sbrightness)])
+            screenPWM.screenPWM(self.sbrightness, pin=18)
         except OSError:
             pass
 
@@ -273,7 +275,7 @@ class ScreenMain(LcarsScreen):
         self.sensorTimestampText.setText(self.tsStr)
 
     def curHeartbeat(self, screenSurface):
-        pygame.draw.rect(screenSurface, self.beatColor, (211, 99, 235, 14), 0)
+        pygame.draw.rect(screenSurface, self.beatColor, (211, 98.5, 235, 14.5), 0)
 
     def on_connect(self, client, userdata, flags, rc):
         """
