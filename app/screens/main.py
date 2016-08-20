@@ -55,18 +55,25 @@ class ScreenMain(LcarsScreen):
 
         # Screen brightness we start from
         self.sbrightness = 0.5
-
+        
         # Screen control buttons
         buttonBri = LcarsButton((255, 204, 153), (5, 270), "BRIGHTER",
                                 self.screenBrighterHandler)
         buttonDim = LcarsButton((255, 153, 102), (5, 375), "DIMMER",
                                 self.screenDimmerHandler)
-        buttonOff = LcarsButton((204, 102, 102), (50, 320), "SCREEN OFF",
+        buttonOff = LcarsButton((204, 102, 102), (50, 270), "OFF",
                                 self.logoutHandler)
+        buttonAuto = LcarsButton(colours.BLUE, (50, 375), "AUTO",
+                                self.autoBrightHandler)
         all_sprites.add(buttonBri, layer=4)
         all_sprites.add(buttonDim, layer=4)
         all_sprites.add(buttonOff, layer=4)
+        all_sprites.add(buttonAuto, layer=4)
 
+        # Automatically control screen brightness at start?
+        self.autosbrightness = True
+        buttonAuto.changeColor(colours.WHITE)
+      
         # Header text
         all_sprites.add(LcarsText((255, 204, 153), (-5, 55),
                                   "WEATHER", size=3), layer=1)
@@ -156,14 +163,10 @@ class ScreenMain(LcarsScreen):
             sDateFmt = "%d%m.%y %H:%M:%S"
             sDate = "{}".format(datetime.now().strftime(sDateFmt))
             self.stardate.setText(sDate)
-
-            # Not needed?
-            # While we're at it, update the other strings that
-            #   could have changed (param value and last update time)
-#            self.updateDisplayedSensorStrings()
-
             self.lastClockUpdate = pygame.time.get_ticks()
+
         LcarsScreen.update(self, screenSurface, fpsClock)
+
         # Update the heartbeat indicator(s)
         self.beatCounterDT = (dt.datetime.now() - self.timestampDT)
         self.beatCounter = self.beatCounterDT.total_seconds()
@@ -184,6 +187,14 @@ class ScreenMain(LcarsScreen):
         if event.type == pygame.MOUSEBUTTONUP:
             return False
 
+    def autoBrightHandler(self, item, event, clock):
+        if self.autosbrightness is True:
+            self.autosbrightness = False
+            self.buttonAuto.changeColor(colours.BLUE)
+        else:
+            self.autosbrightness = True
+            self.buttonAuto.changeColor(colours.WHITE)
+
     def camHandler(self, item, event, clock):
         try:
             if self.runningCam is False:
@@ -194,6 +205,12 @@ class ScreenMain(LcarsScreen):
                 sub.call(self.cmdCamStop)
         except OSError:
             pass
+
+    def screenBrightAbsolute(self):
+        try:
+            screenPWM.screenPWM(self.sbrightness, pin=18)
+        except OSError:
+            self.autosbrightness = False
 
     def screenBrighterHandler(self, item, event, clock):
         try:
@@ -287,6 +304,7 @@ class ScreenMain(LcarsScreen):
         #   reconnect then subscriptions will be renewed.
         #   The character '#' is a wildcard meaning all.
         client.subscribe("Ostation/#")
+        client.subscribe("Istation/lux")
 
     def on_message(self, client, userdata, msg):
         """
@@ -332,5 +350,24 @@ class ScreenMain(LcarsScreen):
             sDate = "{}".format(self.timestampDT.strftime(sDateFmt))
             self.tsStr = "Last Update: %s" % (sDate)
             print "Update", self.tsStr
+        elif msg.topic.find("lux") > -1:
+            lux = np.float(msg.payload)
+            if self.autosbrightness is True:
+                # Turn the lux into a brightness value
+                #   > 100 == full brightness
+                #   <   3 == min brightness
+                # Screen range - 1.0 to 0.1 inclusive
+                mr = 3.
+                xr = 100.
+                if lux >= 100.:
+                   self.sbrightness = 1.0
+                elif lux < 100. and lux >= 3:
+                   self.sbrightness = ((lux - mr)*(1.0 - 0.1)/(xr - mr)) + 0.1
+                   self.sbrightness = np.round(self.sbrightness, 3)
+                else:
+                   self.sbrightness = 0.05
+                print "Lux: ", lux, self.sbrightness
+
+                self.screenBrightAbsolute()
 
         self.updateDisplayedSensorStrings()
