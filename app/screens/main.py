@@ -42,6 +42,7 @@ class ScreenMain(LcarsScreen):
         self.timestampDT = dt.datetime.now()
         self.beatWarningTime = 10.*60.
         self.runningCam = False
+
         self.cmdCamGo = ['sudo', '-H', '-u', 'pi',
                          'adafruit-io', 'camera', 'start',
                          '-f', 'camera_feed', '-m', 'false',
@@ -55,7 +56,11 @@ class ScreenMain(LcarsScreen):
 
         # Screen brightness we start from
         self.sbrightness = 0.5
-        
+        # Need this to not crash the auto brightness
+        #  button, so choose a default that's easily elimated
+        #  from any logging activity just in case
+        self.lux = 86.75309
+
         # Screen control buttons
         buttonBri = LcarsButton((255, 204, 153), (5, 270), "BRIGHTER",
                                 self.screenBrighterHandler)
@@ -63,17 +68,15 @@ class ScreenMain(LcarsScreen):
                                 self.screenDimmerHandler)
         buttonOff = LcarsButton((204, 102, 102), (50, 270), "OFF",
                                 self.logoutHandler)
-        buttonAuto = LcarsButton(colours.BLUE, (50, 375), "AUTO",
-                                self.autoBrightHandler)
+
+        # Add this one to self to make it easily changed elsewhere
+        self.buttonAuto = LcarsButton(colours.BLUE, (50, 375), "AUTO",
+                                      self.autoBrightHandler)
         all_sprites.add(buttonBri, layer=4)
         all_sprites.add(buttonDim, layer=4)
         all_sprites.add(buttonOff, layer=4)
-        all_sprites.add(buttonAuto, layer=4)
+        all_sprites.add(self.buttonAuto, layer=4)
 
-        # Automatically control screen brightness at start?
-        self.autosbrightness = True
-        buttonAuto.changeColor(colours.WHITE)
-      
         # Header text
         all_sprites.add(LcarsText((255, 204, 153), (-5, 55),
                                   "WEATHER", size=3), layer=1)
@@ -158,6 +161,11 @@ class ScreenMain(LcarsScreen):
         self.butt3.changeColor(self.butt3.inactiveColor)
         self.butt4.changeColor(self.butt4.inactiveColor)
 
+        # Automatically control screen brightness at start?
+        self.autosbrightness = True
+        self.buttonAuto.changeColor(colours.WHITE)
+      
+
     def update(self, screenSurface, fpsClock):
         if pygame.time.get_ticks() - self.lastClockUpdate > 1000:
             sDateFmt = "%d%m.%y %H:%M:%S"
@@ -173,8 +181,11 @@ class ScreenMain(LcarsScreen):
 #        print self.beatCounter, self.beatWarningTime
         if self.beatCounter > self.beatWarningTime:
             self.beatColor = (255, 0, 0)
+            if self.beatCounter > self.beatWarningTime*2.:
+                self.paramValueText.changeColour((204, 102, 102))
         else:
             self.beatColor = (0, 255, 0)
+            self.paramValueText.changeColour((255, 204, 153))
         self.curHeartbeat(screenSurface)
 
     def handleEvents(self, event, fpsClock):
@@ -194,6 +205,16 @@ class ScreenMain(LcarsScreen):
         else:
             self.autosbrightness = True
             self.buttonAuto.changeColor(colours.WHITE)
+            try:
+                # First read/scale the last value from the sensor
+                self.theLuxRanger()
+                print "setting to %f" % (self.sbrightness)
+                self.screenBrightAbsolute()
+            except:
+                # If we're here, something went wrong
+                #   but I don't know what to say yet
+                print "Whoops"
+                pass
 
     def camHandler(self, item, event, clock):
         try:
@@ -210,6 +231,8 @@ class ScreenMain(LcarsScreen):
         try:
             screenPWM.screenPWM(self.sbrightness, pin=18)
         except OSError:
+            print "Failure to set screen brightness to %f" % \
+                (self.sbrightness)
             self.autosbrightness = False
 
     def screenBrighterHandler(self, item, event, clock):
@@ -280,6 +303,7 @@ class ScreenMain(LcarsScreen):
         from screens.blanker import ScreenBlanker
         self.client.loop_stop()
         self.client.unsubscribe("Ostation/#")
+        self.client.unsubscribe("Istation/#")
         self.client.disconnect()
 
         self.loadScreen(ScreenBlanker())
@@ -351,23 +375,27 @@ class ScreenMain(LcarsScreen):
             self.tsStr = "Last Update: %s" % (sDate)
             print "Update", self.tsStr
         elif msg.topic.find("lux") > -1:
-            lux = np.float(msg.payload)
+            self.lux = np.float(msg.payload)
             if self.autosbrightness is True:
-                # Turn the lux into a brightness value
-                #   > 100 == full brightness
-                #   <   3 == min brightness
-                # Screen range - 1.0 to 0.1 inclusive
-                mr = 3.
-                xr = 100.
-                if lux >= 100.:
-                   self.sbrightness = 1.0
-                elif lux < 100. and lux >= 3:
-                   self.sbrightness = ((lux - mr)*(1.0 - 0.1)/(xr - mr)) + 0.1
-                   self.sbrightness = np.round(self.sbrightness, 3)
-                else:
-                   self.sbrightness = 0.05
-                print "Lux: ", lux, self.sbrightness
-
+                self.theLuxRanger()
                 self.screenBrightAbsolute()
 
         self.updateDisplayedSensorStrings()
+
+    def theLuxRanger(self):
+        # Turn the lux into a brightness value
+        #   > 100 == full brightness
+        #   <   3 == min brightness
+        # Screen range - 1.0 to 0.1 inclusive
+        mr = 3.
+        xr = 100.
+        if self.lux >= 100.:
+            self.sbrightness = 1.0
+        elif self.lux < 100. and self.lux >= 3:
+            self.sbrightness = ((self.lux - mr)*(1.0 - 0.2)/(xr - mr)) + 0.2
+            self.sbrightness = np.round(self.sbrightness, 3)
+        else:
+            self.sbrightness = 0.05
+
+        print "Lux: ", self.lux, self.sbrightness
+

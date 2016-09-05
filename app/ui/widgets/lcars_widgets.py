@@ -93,6 +93,7 @@ class LcarsText(LcarsWidget):
     def __init__(self, colour, pos, message, size=1.0,
                  background=None, resolution=(480, 320)):
         self.colour = colour
+        self.message = message
         self.background = background
         self.font = Font("assets/swiss911.ttf", int(19.0 * size))
 
@@ -112,7 +113,12 @@ class LcarsText(LcarsWidget):
                                           self.colour, self.background)
 
     def setText(self, newText):
+        self.message = newText
         self.renderText(newText)
+
+    def changeColour(self, colour):
+        self.colour = colour
+        self.renderText(self.message)
 
 
 class LcarsBlockLarge(LcarsWidget):
