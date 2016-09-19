@@ -87,6 +87,7 @@ class ScreenMain(LcarsScreen):
         self.stardate = LcarsText(colours.BLUE, (55, 55),
                                   sDate, size=2.0)
         self.lastClockUpdate = 0
+        self.whenLastRead = dt.datetime.now()
         all_sprites.add(self.stardate, layer=1)
 
         # Section/Parameter ID Text
@@ -178,13 +179,18 @@ class ScreenMain(LcarsScreen):
         # Update the heartbeat indicator(s)
         self.beatCounterDT = (dt.datetime.now() - self.timestampDT)
         self.beatCounter = self.beatCounterDT.total_seconds()
-#        print self.beatCounter, self.beatWarningTime
+        # Heartbeat bar for whether we read the timestamp remotely correctly
         if self.beatCounter > self.beatWarningTime:
             self.beatColor = (255, 0, 0)
-            if self.beatCounter > self.beatWarningTime*2.:
-                self.paramValueText.changeColour((204, 102, 102))
         else:
             self.beatColor = (0, 255, 0)
+
+        # Changing text color depending on time of last good (outdoor) read
+        if ((dt.datetime.now() - self.whenLastRead).total_seconds()) > self.beatWarningTime*2.:
+            # Warning text color
+            self.paramValueText.changeColour((204, 102, 102))
+        else:
+            # Normal text color
             self.paramValueText.changeColour((255, 204, 153))
         self.curHeartbeat(screenSurface)
 
@@ -242,7 +248,6 @@ class ScreenMain(LcarsScreen):
                 self.sbrightness = 0.1
             if self.sbrightness > 1.0:
                 self.sbrightness = 1.0
-#            sub.call(['gpio', '-g', 'pwm', '18', str(self.sbrightness)])
             screenPWM.screenPWM(self.sbrightness, pin=18)
         except OSError:
             pass
@@ -254,13 +259,11 @@ class ScreenMain(LcarsScreen):
                 self.sbrightness = 0.1
             if self.sbrightness > 1.0:
                 self.sbrightness = 1.0
-#            sub.call(['gpio', '-g', 'pwm', '18', str(self.sbrightness)])
             screenPWM.screenPWM(self.sbrightness, pin=18)
         except OSError:
             pass
 
     def cTempHandler(self, item, event, clock):
-#        self.sectionText.setText("TEMPERATURE:")
         self.displayedValue = "Temp"
         self.paramStr = self.tStr
         self.updateDisplayedSensorStrings()
@@ -270,7 +273,6 @@ class ScreenMain(LcarsScreen):
         self.butt4.changeColor(self.butt4.inactiveColor)
 
     def cPressHandler(self, item, event, clock):
-#        self.sectionText.setText("PRESSURE:")
         self.displayedValue = "Pre"
         self.paramStr = self.pStr
         self.updateDisplayedSensorStrings()
@@ -280,7 +282,6 @@ class ScreenMain(LcarsScreen):
         self.butt4.changeColor(self.butt4.inactiveColor)
 
     def cHumiHandler(self, item, event, clock):
-#        self.sectionText.setText("HUMIDITY:")
         self.displayedValue = "Humi"
         self.paramStr = self.hStr
         self.updateDisplayedSensorStrings()
@@ -290,7 +291,6 @@ class ScreenMain(LcarsScreen):
         self.butt4.changeColor(self.butt4.inactiveColor)
 
     def cPowerHandler(self, item, event, clock):
-#        self.sectionText.setText("STATION POWER:")
         self.displayedValue = "Powr"
         self.paramStr = self.pwrStr
         self.updateDisplayedSensorStrings()
@@ -334,7 +334,6 @@ class ScreenMain(LcarsScreen):
         """
         Callback for when a PUBLISH message is received from the server.
         """
-#        print(msg.topic+" "+str(msg.payload))
 
         if msg.topic.find("temperature") > -1:
             self.temperature = np.float(msg.payload)
@@ -343,30 +342,35 @@ class ScreenMain(LcarsScreen):
             if self.displayedValue == "Temp":
                 self.paramStr = self.tStr
             print "Update", self.tStr
+            self.whenLastRead = dt.datetime.now()
         if msg.topic.find("pressure") > -1:
             self.pressure = np.float(msg.payload)
             self.pStr = "%04.2f mB" % (self.pressure)
             if self.displayedValue == "Pres":
                 self.paramStr = self.pStr
             print "Update", self.pStr
+            self.whenLastRead = dt.datetime.now()
         elif msg.topic.find("humidity") > -1:
             self.humidity = np.float(msg.payload)
             self.hStr = "%03.0f %%" % (self.humidity)
             if self.displayedValue == "Humi":
                 self.paramStr = self.hStr
             print "Update", self.hStr
+            self.whenLastRead = dt.datetime.now()
         elif msg.topic.find("battery") > -1:
             self.battery = np.float(msg.payload)
             self.pwrStr = "%01.2f / %01.2f V" % (self.battery, self.load)
             if self.displayedValue == "Powr":
                 self.paramStr = self.pwrStr
             print "Update", self.pwrStr
+            self.whenLastRead = dt.datetime.now()
         elif msg.topic.find("load") > -1:
             self.load = np.float(msg.payload)
             self.pwrStr = "%01.2f / %01.2f V" % (self.battery, self.load)
             if self.displayedValue == "Powr":
                 self.paramStr = self.pwrStr
             print "Update", self.pwrStr
+            self.whenLastRead = dt.datetime.now()
         elif msg.topic.find("timestamp") > -1:
             sDateFmt = "%d%m.%y %H:%M:%S"
             self.timestamp = np.int(msg.payload)
@@ -384,14 +388,14 @@ class ScreenMain(LcarsScreen):
 
     def theLuxRanger(self):
         # Turn the lux into a brightness value
-        #   > 100 == full brightness
-        #   <   3 == min brightness
+        #   >  xr == full brightness
+        #   <  mr == min brightness
         # Screen range - 1.0 to 0.1 inclusive
         mr = 3.
         xr = 100.
-        if self.lux >= 100.:
+        if self.lux >= xr:
             self.sbrightness = 1.0
-        elif self.lux < 100. and self.lux >= 3:
+        elif self.lux < xr and self.lux >= mr:
             self.sbrightness = ((self.lux - mr)*(1.0 - 0.2)/(xr - mr)) + 0.2
             self.sbrightness = np.round(self.sbrightness, 3)
         else:
