@@ -2,6 +2,7 @@ import pygame
 from pygame.font import Font
 from pygame.locals import *
 from pygame.mixer import Sound
+from os.path import dirname, join
 
 from ui.widgets.sprite import LcarsWidget
 from ui import colours
@@ -16,7 +17,9 @@ class LcarsElbow(LcarsWidget):
     STYLE_TOP_RIGHT = 3
 
     def __init__(self, colour, style, pos):
-        image = pygame.image.load("assets/elbow.png").convert()
+        script_dir = dirname(__file__)
+        ipath = join(script_dir, '../../assets/elbow.png')
+        image = pygame.image.load(ipath).convert()
         if (style == LcarsElbow.STYLE_BOTTOM_LEFT):
             image = pygame.transform.flip(image, False, True)
         elif (style == LcarsElbow.STYLE_BOTTOM_RIGHT):
@@ -35,7 +38,9 @@ class LcarsTab(LcarsWidget):
     STYLE_RIGHT = 2
 
     def __init__(self, colour, style, pos):
-        image = pygame.image.load("assets/tab.png").convert()
+        script_dir = dirname(__file__)
+        ipath = join(script_dir, '../../assets/tab.png')
+        image = pygame.image.load(ipath).convert()
         if (style == LcarsTab.STYLE_RIGHT):
             image = pygame.transform.flip(image, False, True)
 
@@ -48,9 +53,12 @@ class LcarsTab(LcarsWidget):
 class LcarsButton(LcarsWidget):
     def __init__(self, colour, pos, text, handler=None):
         self.handler = handler
-        image = pygame.image.load("assets/betterbutton.png").convert()
+        script_dir = dirname(__file__)
+        ipath = join(script_dir, '../../assets/betterbutton.png')
+        image = pygame.image.load(ipath).convert()
         size = (image.get_rect().width, image.get_rect().height)
-        font = Font("assets/swiss911.ttf", 19)
+        ipath = join(script_dir, '../../assets/swiss911.ttf')
+        font = Font(ipath, 19)
         textImage = font.render(text, False, colours.BLACK)
         image.blit(textImage,
                    (image.get_rect().width - textImage.get_rect().width - 10,
@@ -95,7 +103,9 @@ class LcarsText(LcarsWidget):
         self.colour = colour
         self.message = message
         self.background = background
-        self.font = Font("assets/swiss911.ttf", int(19.0 * size))
+        script_dir = dirname(__file__)
+        ipath = join(script_dir, '../../assets/swiss911.ttf')
+        self.font = Font(ipath, int(19.0 * size))
 
         self.renderText(message)
         # center the text if needed

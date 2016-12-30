@@ -1,5 +1,6 @@
 import pygame
 from pygame.mixer import Sound
+from os.path import dirname, join
 
 from ui import colours
 from ui.widgets.background import LcarsBackgroundImage
@@ -11,7 +12,9 @@ from ui.widgets.screen import LcarsScreen
 class ScreenAuthorize(LcarsScreen):
 
     def setup(self, all_sprites):
-        all_sprites.add(LcarsBackgroundImage("assets/lcars_screen_2.png"),
+        script_dir = dirname(__file__)
+        ipath = join(script_dir, '../assets/lcars_screen_2.png')
+        all_sprites.add(LcarsBackgroundImage(ipath),
                         layer=0)
 
         all_sprites.add(LcarsText(colours.ORANGE, (170, -1), "AUTHORIZATION REQUIRED", 2),
@@ -29,13 +32,13 @@ class ScreenAuthorize(LcarsScreen):
 #        all_sprites.add(LcarsGifImage("assets/gadgets/stlogorotating.gif", (103, 369), 50), layer=1)        
 
         # sounds
-        Sound("assets/audio/panel/215.wav").play()
-        Sound("assets/audio/enter_authorization_code.wav").play()
-        self.sound_granted = Sound("assets/audio/accessing.wav")
-        self.sound_beep1 = Sound("assets/audio/panel/206.wav")
-        self.sound_denied = Sound("assets/audio/access_denied.wav")
-        self.sound_deny1 = Sound("assets/audio/deny_1.wav")
-        self.sound_deny2 = Sound("assets/audio/deny_2.wav")
+#        Sound("assets/audio/panel/215.wav").play()
+#        Sound("assets/audio/enter_authorization_code.wav").play()
+#        self.sound_granted = Sound("assets/audio/accessing.wav")
+#        self.sound_beep1 = Sound("assets/audio/panel/206.wav")
+#        self.sound_denied = Sound("assets/audio/access_denied.wav")
+#        self.sound_deny1 = Sound("assets/audio/deny_1.wav")
+#        self.sound_deny2 = Sound("assets/audio/deny_2.wav")
 
         self.attempts = 0
         self.granted = False

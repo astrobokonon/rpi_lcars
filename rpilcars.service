@@ -1,0 +1,10 @@
+[Unit]
+Description=LCARS Screen Display
+After=multi-user.target bme.service
+
+[Service]
+Type=idle
+ExecStart=/usr/bin/xinit /usr/bin/python /home/pi/Development/rpi_lcars/app/lcars.py > /tmp/rpilcars.log 2>&1
+
+[Install]
+WantedBy=multi-user.target
