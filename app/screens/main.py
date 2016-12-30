@@ -5,6 +5,7 @@ import datetime as dt
 import subprocess as sub
 from datetime import datetime
 from pygame.mixer import Sound
+from os.path import dirname, join
 
 import paho.mqtt.client as mqtt
 
@@ -51,7 +52,9 @@ class ScreenMain(LcarsScreen):
                            'adafruit-io', 'camera', 'stop']
 
         # Background image/overall layout
-        all_sprites.add(LcarsBackgroundImage("assets/mainscreen.png"),
+        script_dir = dirname(__file__)
+        ipath = join(script_dir, '../assets/mainscreen.png')
+        all_sprites.add(LcarsBackgroundImage(ipath),
                         layer=0)
 
         # Screen brightness we start from
@@ -143,8 +146,8 @@ class ScreenMain(LcarsScreen):
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
-#        self.client.connect("localhost", 1883, 60)
-        self.client.connect("Tabr", 1883, 60)
+        self.client.username_pw_set("WeatherduinoUser", "rainyday")
+        self.client.connect("localhost", 1883, 60)
 
         # Non-blocking call that processes network traffic, dispatches
         #   callbacks and handles reconnecting.  Must call client.loop_stop()
