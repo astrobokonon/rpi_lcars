@@ -143,7 +143,8 @@ class ScreenMain(LcarsScreen):
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
-        self.client.connect("localhost", 1883, 60)
+#        self.client.connect("localhost", 1883, 60)
+        self.client.connect("Tabr", 1883, 60)
 
         # Non-blocking call that processes network traffic, dispatches
         #   callbacks and handles reconnecting.  Must call client.loop_stop()
@@ -335,54 +336,55 @@ class ScreenMain(LcarsScreen):
         Callback for when a PUBLISH message is received from the server.
         """
 
-        if msg.topic.find("temperature") > -1:
-            self.temperature = np.float(msg.payload)
-            self.tStr = "%02.1f C | %02.1f F" % (self.temperature,
-                                                 CtoF(self.temperature))
+        if msg.topic.find("Ostation") > -1:
+            if msg.topic.find("temperature") > -1:
+                self.temperature = np.float(msg.payload)
+                self.tStr = "%02.1f C | %02.1f F" % (self.temperature,
+                                                     CtoF(self.temperature))
+                print "Update", self.tStr
+                self.whenLastRead = dt.datetime.now()
+            elif msg.topic.find("pressure") > -1:
+                self.pressure = np.float(msg.payload)
+                self.pStr = "%04.2f mB" % (self.pressure)
+                print "Update", self.pStr
+                self.whenLastRead = dt.datetime.now()
+            elif msg.topic.find("humidity") > -1:
+                self.humidity = np.float(msg.payload)
+                self.hStr = "%03.0f %%" % (self.humidity)
+                print "Update", self.hStr
+                self.whenLastRead = dt.datetime.now()
+            elif msg.topic.find("battery") > -1:
+                self.battery = np.float(msg.payload)
+                self.pwrStr = "%01.2f / %01.2f V" % (self.battery, self.load)
+                print "Update", self.pwrStr
+                self.whenLastRead = dt.datetime.now()
+            elif msg.topic.find("load") > -1:
+                self.load = np.float(msg.payload)
+                self.pwrStr = "%01.2f / %01.2f V" % (self.battery, self.load)
+                print "Update", self.pwrStr
+                self.whenLastRead = dt.datetime.now()
+            elif msg.topic.find("timestamp") > -1:
+                sDateFmt = "%d%m.%y %H:%M:%S"
+                self.timestamp = np.int(msg.payload)
+                self.timestampDT = datetime.fromtimestamp(self.timestamp)
+                sDate = "{}".format(self.timestampDT.strftime(sDateFmt))
+                self.tsStr = "Last Update: %s" % (sDate)
+                print "Update", self.tsStr
+            # Display string updates
             if self.displayedValue == "Temp":
                 self.paramStr = self.tStr
-            print "Update", self.tStr
-            self.whenLastRead = dt.datetime.now()
-        if msg.topic.find("pressure") > -1:
-            self.pressure = np.float(msg.payload)
-            self.pStr = "%04.2f mB" % (self.pressure)
             if self.displayedValue == "Pres":
                 self.paramStr = self.pStr
-            print "Update", self.pStr
-            self.whenLastRead = dt.datetime.now()
-        elif msg.topic.find("humidity") > -1:
-            self.humidity = np.float(msg.payload)
-            self.hStr = "%03.0f %%" % (self.humidity)
             if self.displayedValue == "Humi":
                 self.paramStr = self.hStr
-            print "Update", self.hStr
-            self.whenLastRead = dt.datetime.now()
-        elif msg.topic.find("battery") > -1:
-            self.battery = np.float(msg.payload)
-            self.pwrStr = "%01.2f / %01.2f V" % (self.battery, self.load)
             if self.displayedValue == "Powr":
                 self.paramStr = self.pwrStr
-            print "Update", self.pwrStr
-            self.whenLastRead = dt.datetime.now()
-        elif msg.topic.find("load") > -1:
-            self.load = np.float(msg.payload)
-            self.pwrStr = "%01.2f / %01.2f V" % (self.battery, self.load)
-            if self.displayedValue == "Powr":
-                self.paramStr = self.pwrStr
-            print "Update", self.pwrStr
-            self.whenLastRead = dt.datetime.now()
-        elif msg.topic.find("timestamp") > -1:
-            sDateFmt = "%d%m.%y %H:%M:%S"
-            self.timestamp = np.int(msg.payload)
-            self.timestampDT = datetime.fromtimestamp(self.timestamp)
-            sDate = "{}".format(self.timestampDT.strftime(sDateFmt))
-            self.tsStr = "Last Update: %s" % (sDate)
-            print "Update", self.tsStr
-        elif msg.topic.find("lux") > -1:
-            self.lux = np.float(msg.payload)
-            if self.autosbrightness is True:
-                self.theLuxRanger()
-                self.screenBrightAbsolute()
+        elif msg.topic.find("Istation") > -1:
+            if msg.topic.find("lux") > -1:
+                self.lux = np.float(msg.payload)
+                if self.autosbrightness is True:
+                    self.theLuxRanger()
+                    self.screenBrightAbsolute()
 
         self.updateDisplayedSensorStrings()
 
@@ -390,7 +392,7 @@ class ScreenMain(LcarsScreen):
         # Turn the lux into a brightness value
         #   >  xr == full brightness
         #   <  mr == min brightness
-        # Screen range - 1.0 to 0.1 inclusive
+        # Screen range - 1.0 to 0.2 inclusive
         mr = 3.
         xr = 100.
         if self.lux >= xr:
