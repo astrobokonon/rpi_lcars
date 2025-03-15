@@ -26,12 +26,13 @@ class ScreenBlanker(LcarsScreen):
     def handleEvents(self, event, fpsClock):
         LcarsScreen.handleEvents(self, event, fpsClock)
         if event.type == pygame.MOUSEBUTTONDOWN:
-                try:
-#		    sub.call(['gpio', '-g', 'pwm', '18', '1023'])
-		    screenPWM.screenPWM(0.5, pin=18)
-                except OSError:
-                    pass
-                from screens.main import ScreenMain
-                self.loadScreen(ScreenMain())
+            try:
+    #		    sub.call(['gpio', '-g', 'pwm', '18', '1023'])
+                screenPWM.screenPWM(0.5, pin=18)
+            except OSError:
+                pass
+
+            from screens.main import ScreenMain
+            self.loadScreen(ScreenMain())
 
         return False
