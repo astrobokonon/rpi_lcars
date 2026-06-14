@@ -29,11 +29,12 @@ class LcarsWidget(pygame.sprite.DirtySprite):
             self.line.next()
             if self.rect.center == self.line.pos:
                 self.dirty = 0
-            else:
-                self.dirty = 1
+
             self.rect.center = self.line.pos
         else:
             self.dirty = 0
+
+        screen.blit(self.image, self.rect)
 
     def handleEvent(self, event, clock):
         if not self.visible:

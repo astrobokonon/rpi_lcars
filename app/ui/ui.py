@@ -36,7 +36,8 @@ class UserInterface:
 
     def update(self):
         self.screen.pre_update(self.screenSurface, self.fpsClock)
-        self.all_sprites.update(self.screenSurface)
+        self.all_sprites.update()
+        self.all_sprites.draw(self.screenSurface)
         self.screen.update(self.screenSurface, self.fpsClock)
         pygame.display.update()
     
