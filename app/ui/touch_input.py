@@ -11,10 +11,10 @@ class TouchListener:
         self.height = height
         self.device = None
         
-        try:
-            self.device = evdev.InputDevice(self.device_path)
-        except Exception as e:
-            print(f"Could not open touch device {device_path}: {e}")
+         try:
+             self.device = evdev.InputDevice(self.device_path, non_blocking=True)
+         except Exception as e:
+             print(f"Could not open touch device {device_path}: {e}")
 
     def get_events(self):
         if not self.device:
@@ -45,7 +45,11 @@ class TouchListener:
                             events.append(pygame.event.Event(pygame.MOUSEBUTTONDOWN, {'pos': (scaled_x, scaled_y), 'button': 1}))
                         elif event.value == 0: # Release
                             events.append(pygame.event.Event(pygame.MOUSEBUTTONUP, {'pos': (scaled_x, scaled_y), 'button': 1}))
+        except BlockingIOError:
+            # No data available, return empty list
+            pass
         except Exception as e:
+            # Unexpected error
             print(f"Error reading touch events: {e}")
-        
+         
         return events
