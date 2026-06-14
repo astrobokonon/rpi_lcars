@@ -1,4 +1,5 @@
 #!/bin/sh
-cd app
-#xinit python lcars.py
+export DISPLAY=:0
+export SDL_FBDEV=/dev/fb1
+cd /home/rhamilton/Codes/rpi_lcars/app
 python lcars.py

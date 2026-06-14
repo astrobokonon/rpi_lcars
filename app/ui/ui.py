@@ -1,5 +1,6 @@
 import pygame
 from pygame.locals import *
+from .touch_input import TouchListener
 
 
 class UserInterface:
@@ -29,6 +30,7 @@ class UserInterface:
     
         self.screen = screen
         self.screen.setup(self.all_sprites)
+        self.touch_listener = TouchListener(width=resolution[0], height=resolution[1])
         self.running = True
 
     def update(self):
@@ -38,6 +40,11 @@ class UserInterface:
         pygame.display.update()
     
     def handleEvents(self):
+        # Inject touch events into the Pygame event queue
+        touch_events = self.touch_listener.get_events()
+        for event in touch_events:
+            pygame.event.post(event)
+
         for event in pygame.event.get():
             if (event.type == pygame.QUIT) or \
                 (event.type == KEYUP and event.key == K_ESCAPE):
