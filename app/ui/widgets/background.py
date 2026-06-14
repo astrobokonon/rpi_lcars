@@ -1,3 +1,4 @@
+from ui.widgets.sprite import LcarsWidget
 import pygame
 from .sprite import LcarsWidget
 
