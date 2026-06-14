@@ -1,5 +1,8 @@
 import pygame
+import time
 from pygame.locals import *
+from .touch_input import TouchListener
+
 
 from ui.utils import sound
 
@@ -28,6 +31,7 @@ class UserInterface:
     
         self.screen = screen
         self.screen.setup(self.all_sprites)
+        self.touch_listener = TouchListener(width=resolution[0], height=resolution[1])
         self.running = True
 
     def update(self):
@@ -37,21 +41,31 @@ class UserInterface:
         pygame.display.update()
     
     def handleEvents(self):
+        # Inject touch events into the Pygame event queue
+        touch_events = self.touch_listener.get_events()
+        for event in touch_events:
+            pygame.event.post(event)
+
+        # Debug: print how many times get_events was called this frame
+        if self.touch_listener.call_count:
+            print(f"Touch listener calls this frame: {self.touch_listener.call_count}")
+            self.touch_listener.call_count = 0
+
         for event in pygame.event.get():
             if (event.type == pygame.QUIT) or \
                 (event.type == KEYUP and event.key == K_ESCAPE):
                 pygame.quit()
                 self.running = False
                 return
-    
+
             for sprite in self.all_sprites.sprites():
                 if hasattr(event, "pos"):
                     focussed = sprite.rect.collidepoint(event.pos)
                     if (focussed or sprite.focussed) and sprite.handleEvent(event, self.fpsClock):
                         break
-                
+
             self.screen.handleEvents(event, self.fpsClock)
-    
+
             newScreen = self.screen.getNextScreen()
             if (newScreen):
                 self.all_sprites.empty()
@@ -63,6 +77,14 @@ class UserInterface:
         pygame.display.get_init()
     
     def tick(self):
+        frame_start = time.time()
         self.update()
         self.handleEvents()
         self.fpsClock.tick(self.fps)
+        frame_time = time.time() - frame_start
+        # Debug: print frame timing occasionally
+        if not hasattr(self, '_frame_count'):
+            self._frame_count = 0
+        self._frame_count += 1
+        if self._frame_count % 60 == 0:
+            print(f"Frame time: {frame_time*1000:.2f} ms (fps ~ {1.0/frame_time if frame_time>0 else 0:.1f})")

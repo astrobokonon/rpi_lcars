@@ -1,8 +1,4 @@
 #!/bin/sh
-cd app
-
-if [-z $DISPLAY]; then
-  xinit /usr/bin/python3 lcars.py
-else
-  /usr/bin/python3 lcars.py
-fi
+export SDL_FBDEV=/dev/fb1
+cd /home/rhamilton/Codes/rpi_lcars/app
+python lcars.py

@@ -13,7 +13,9 @@ from ui.widgets.lcars_widgets import LcarsButton
 class ScreenAuthorize(LcarsScreen):
 
     def setup(self, all_sprites):
-        all_sprites.add(LcarsBackgroundImage("assets/lcars_screen_2.png"),
+        script_dir = dirname(__file__)
+        ipath = join(script_dir, '../assets/lcars_screen_2.png')
+        all_sprites.add(LcarsBackgroundImage(ipath),
                         layer=0)
 
         all_sprites.add(LcarsGifImage("assets/gadgets/stlogorotating.gif", (103, 369), 50), 
@@ -22,10 +24,10 @@ class ScreenAuthorize(LcarsScreen):
         all_sprites.add(LcarsText(colours.ORANGE, (270, -1), "AUTHORIZATION REQUIRED", 2),
                         layer=0)
 
-        all_sprites.add(LcarsText(colours.BLUE, (330, -1), "ONLY AUTHORIZED PERSONNEL MAY ACCESS THIS TERMINAL", 1.5),
+        all_sprites.add(LcarsText(colours.BLUE, (230, -1), "ONLY AUTHORIZED PERSONNEL MAY ACCESS THIS TERMINAL", 1.5),
                         layer=1)
 
-        all_sprites.add(LcarsText(colours.BLUE, (360, -1), "TOUCH TERMINAL TO PROCEED", 1.5),
+        all_sprites.add(LcarsText(colours.BLUE, (260, -1), "TOUCH TERMINAL TO PROCEED", 1.5),
                         layer=1)
         
         #all_sprites.add(LcarsText(colours.BLUE, (390, -1), "FAILED ATTEMPTS WILL BE REPORTED", 1.5),layer=1)

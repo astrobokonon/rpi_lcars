@@ -1,12 +1,13 @@
 import pygame
 from ui.utils.interpolator import Interpolator
 
+
 class LcarsWidget(pygame.sprite.DirtySprite):
     """Base class for all widgets"""
 
     def __init__(self, color, pos, size, handler=None):
         pygame.sprite.DirtySprite.__init__(self)
-        if self.image == None:
+        if self.image is None:
             self.image = pygame.Surface(size).convert()
             self.image.fill(color)
 
@@ -16,7 +17,7 @@ class LcarsWidget(pygame.sprite.DirtySprite):
         self.size = (self.rect.width, self.rect.height)
 
         self.long_pressed = False
-        self.pressed_time = 0            
+        self.pressed_time = 0
         self.focussed = False
         self.line = None
         self.handler = handler
@@ -24,12 +25,12 @@ class LcarsWidget(pygame.sprite.DirtySprite):
     def update(self, screen):
         if not self.visible:
             return
-        
-        if self.line != None:
+
+        if self.line is not None:
             self.line.next()
             if self.rect.center == self.line.pos:
                 self.dirty = 0
-                
+
             self.rect.center = self.line.pos
         else:
             self.dirty = 0
@@ -76,11 +77,12 @@ class LcarsWidget(pygame.sprite.DirtySprite):
                 if (pixel > 50):
                     self.image.set_at((x, y), colour)
 
+
 class LcarsMoveToMouse(LcarsWidget):
     """For testing purposes - move a small square to last clicked position"""
     def __init__(self, color):
         self.image = None
-        LcarsWidget.__init__(self, color, (0,0), (10,10))
+        LcarsWidget.__init__(self, color, (0, 0), (10, 10))
         self.focussed = True
 
     def handleEvent(self, event, clock):
@@ -88,15 +90,14 @@ class LcarsMoveToMouse(LcarsWidget):
             # move sprite to clicked location using interpolator
             fps = clock.get_fps()
             x, y = event.pos
-            
+
             self.line = Interpolator(
-                self.rect.center,
-                (x, y),
-                0.5, # duration of interpolation
-                fps, # current frames per second
-                1.0, # type of interpolation
-                0.5  # middle?
-            )
-            
+                                     self.rect.center,
+                                     (x, y),
+                                     0.5,  # duration of interpolation
+                                     fps,  # current frames per second
+                                     1.0,  # type of interpolation
+                                     0.5   # middle?
+                                     )
+
             self.dirty = 1
-    

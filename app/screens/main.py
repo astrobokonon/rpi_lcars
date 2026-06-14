@@ -1,5 +1,18 @@
 from datetime import datetime
 
+import time
+import json
+import pygame
+import numpy as np
+import datetime as dt
+import subprocess as sub
+from datetime import datetime
+from pygame.mixer import Sound
+from os.path import dirname, join
+
+import paho.mqtt.client as mqtt
+
+from ui import colours, screenPWM
 from ui.widgets.background import LcarsBackgroundImage, LcarsImage
 from ui.widgets.gifimage import LcarsGifImage
 from ui.widgets.lcars_widgets import *
@@ -7,10 +20,45 @@ from ui.widgets.screen import LcarsScreen
 
 from datasources.network import get_ip_address_string
 
+def CtoF(tempy):
+    """
+    Convert Celcius to Fahrenheit
+    """
+    ft = (float(tempy)*(9./5.) + 32.)
+    return ft
+
 
 class ScreenMain(LcarsScreen):
     def setup(self, all_sprites):
-        all_sprites.add(LcarsBackgroundImage("assets/lcars_screen_1b.png"),
+        # Weather parameters
+        self.temperature = -9999
+        self.tStr = None
+        self.pressure = -9999
+        self.pStr = None
+        self.humidity = -9999
+        self.hStr = None
+        self.battery = -9999
+        self.load = -9999
+        self.pwrStr = None
+        self.timestamp = -9999
+        self.tsStr = None
+        self.displayedValue = "Temp"
+        self.paramStr = self.tStr
+        self.timestampDT = dt.datetime.now()
+        self.beatWarningTime = 10.*60.
+        self.runningCam = False
+
+        self.cmdCamGo = ['sudo', '-H', '-u', 'pi',
+                         'adafruit-io', 'camera', 'start',
+                         '-f', 'camera_feed', '-m', 'false',
+                         '-r', '5', '-v', 'false']
+        self.cmdCamStop = ['sudo', '-H', '-u', 'pi',
+                           'adafruit-io', 'camera', 'stop']
+
+        # Background image/overall layout
+        script_dir = dirname(__file__)
+        ipath = join(script_dir, '../assets/mainscreen.png')
+        all_sprites.add(LcarsBackgroundImage(ipath),
                         layer=0)
 
         # panel text
@@ -44,6 +92,7 @@ class ScreenMain(LcarsScreen):
         # date display
         self.stardate = LcarsText(colours.BLUE, (12, 380), "STAR DATE 2311.05 17:54:32", 1.5)
         self.lastClockUpdate = 0
+        self.whenLastRead = dt.datetime.now()
         all_sprites.add(self.stardate, layer=1)
 
         # buttons
@@ -79,13 +128,17 @@ class ScreenMain(LcarsScreen):
 
     def update(self, screenSurface, fpsClock):
         if pygame.time.get_ticks() - self.lastClockUpdate > 1000:
-            self.stardate.setText("STAR DATE {}".format(datetime.now().strftime("%d%m.%y %H:%M:%S")))
+            sDateFmt = "%d%m.%y %H:%M:%S"
+            sDate = "{}".format(datetime.now().strftime(sDateFmt))
+            self.stardate.setText(sDate)
             self.lastClockUpdate = pygame.time.get_ticks()
+
         LcarsScreen.update(self, screenSurface, fpsClock)
 
     def handleEvents(self, event, fpsClock):
         if event.type == pygame.MOUSEBUTTONDOWN:
-            self.beep1.play()
+#            self.beep1.play()
+            pass
 
         if event.type == pygame.MOUSEBUTTONUP:
             return False
