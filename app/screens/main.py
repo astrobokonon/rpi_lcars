@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import time
 import json
 import pygame
@@ -13,9 +15,10 @@ import paho.mqtt.client as mqtt
 from ui import colours, screenPWM
 from ui.widgets.background import LcarsBackgroundImage, LcarsImage
 from ui.widgets.gifimage import LcarsGifImage
-from ui.widgets.lcars_widgets import LcarsText, LcarsButton
+from ui.widgets.lcars_widgets import *
 from ui.widgets.screen import LcarsScreen
 
+from datasources.network import get_ip_address_string
 
 def CtoF(tempy):
     """
@@ -58,119 +61,70 @@ class ScreenMain(LcarsScreen):
         all_sprites.add(LcarsBackgroundImage(ipath),
                         layer=0)
 
-        # Screen brightness we start from
-        self.sbrightness = 0.5
-        # Need this to not crash the auto brightness
-        #  button, so choose a default that's easily elimated
-        #  from any logging activity just in case
-        self.lux = 86.75309
+        # panel text
+        all_sprites.add(LcarsText(colours.BLACK, (15, 44), "LCARS 105"),
+                        layer=1)
+                        
+        all_sprites.add(LcarsText(colours.ORANGE, (0, 135), "HOME AUTOMATION", 2),
+                        layer=1)
+        all_sprites.add(LcarsBlockMedium(colours.RED_BROWN, (145, 16), "LIGHTS"),
+                        layer=1)
+        all_sprites.add(LcarsBlockSmall(colours.ORANGE, (211, 16), "CAMERAS"),
+                        layer=1)
+        all_sprites.add(LcarsBlockLarge(colours.BEIGE, (249, 16), "ENERGY"),
+                        layer=1)
 
-        # Screen control buttons
-        buttonBri = LcarsButton((255, 204, 153), (5, 270), "BRIGHTER",
-                                self.screenBrighterHandler)
-        buttonDim = LcarsButton((255, 153, 102), (5, 375), "DIMMER",
-                                self.screenDimmerHandler)
-        buttonOff = LcarsButton((204, 102, 102), (50, 270), "OFF",
-                                self.logoutHandler)
+        self.ip_address = LcarsText(colours.BLACK, (444, 520),
+                                    get_ip_address_string())
+        all_sprites.add(self.ip_address, layer=1)
 
-        # Add this one to self to make it easily changed elsewhere
-        self.buttonAuto = LcarsButton(colours.BLUE, (50, 375), "AUTO",
-                                      self.autoBrightHandler)
-        all_sprites.add(buttonBri, layer=4)
-        all_sprites.add(buttonDim, layer=4)
-        all_sprites.add(buttonOff, layer=4)
-        all_sprites.add(self.buttonAuto, layer=4)
-
-        # Header text
-        all_sprites.add(LcarsText((255, 204, 153), (-5, 55),
-                                  "WEATHER", size=3), layer=1)
+        # info text
+        all_sprites.add(LcarsText(colours.WHITE, (192, 174), "EVENT LOG:", 1.5),
+                        layer=3)
+        all_sprites.add(LcarsText(colours.BLUE, (244, 174), "2 ALARM ZONES TRIGGERED", 1.5),
+                        layer=3)
+        all_sprites.add(LcarsText(colours.BLUE, (286, 174), "14.3 kWh USED YESTERDAY", 1.5),
+                        layer=3)
+        all_sprites.add(LcarsText(colours.BLUE, (330, 174), "1.3 Tb DATA USED THIS MONTH", 1.5),
+                        layer=3)
+        self.info_text = all_sprites.get_sprites_from_layer(3)
 
         # date display
-        sDateFmt = "%d%m.%y %H:%M:%S"
-        sDate = "{}".format(datetime.now().strftime(sDateFmt))
-        self.stardate = LcarsText(colours.BLUE, (55, 55),
-                                  sDate, size=2.0)
+        self.stardate = LcarsText(colours.BLUE, (12, 380), "STAR DATE 2311.05 17:54:32", 1.5)
         self.lastClockUpdate = 0
         self.whenLastRead = dt.datetime.now()
         all_sprites.add(self.stardate, layer=1)
 
-        # Section/Parameter ID Text
-        self.sensorTimestampText = LcarsText((0, 0, 0), (95, 275),
-                                             "LAST UPDATE: ", 1.0)
-#        self.sectionText = LcarsText((255, 204, 153), (120, 55),
-#                                     "TEMPERATURE:", 3.)
-        all_sprites.add(self.sensorTimestampText, layer=4)
-#        all_sprites.add(self.sectionText, layer=4)
-
-        # Section Value Text.  If the temperature isn't nuts, it's probably
-        #   a good enough value to display so start with that.
-        self.paramValueText = LcarsText((255, 204, 153), (170, -1),
-                                        "XX.X C|XX.X F", 4.5)
-
-        all_sprites.add(self.paramValueText, layer=3)
-        self.info_text = all_sprites.get_sprites_from_layer(3)
-
         # buttons
-        # (Bottom)
-        #buttrowpos = (270, 65)
-        # (Top)
-        buttrowpos = (125, 55)
-        self.butt1 = LcarsButton(colours.PURPLE, buttrowpos, "Temperature",
-                                 self.cTempHandler)
-        self.butt2 = LcarsButton(colours.PURPLE,
-                                 (buttrowpos[0],
-                                  buttrowpos[1] + self.butt1.size[0]),
-                                 "Pressure", self.cPressHandler)
-        self.butt3 = LcarsButton(colours.PURPLE,
-                                 (buttrowpos[0],
-                                  buttrowpos[1] + self.butt1.size[0] +
-                                  self.butt2.size[0]),
-                                 "Humidity", self.cHumiHandler)
-        self.butt4 = LcarsButton(colours.PURPLE,
-                                 (buttrowpos[0],
-                                  buttrowpos[1] + self.butt1.size[0] +
-                                  self.butt2.size[0] + self.butt3.size[0]),
-                                 "Power", self.cPowerHandler)
+        all_sprites.add(LcarsButton(colours.RED_BROWN, (6, 662), "LOGOUT", self.logoutHandler),
+                        layer=4)
+        all_sprites.add(LcarsButton(colours.BEIGE, (107, 127), "SENSORS", self.sensorsHandler),
+                        layer=4)
+        all_sprites.add(LcarsButton(colours.PURPLE, (107, 262), "GAUGES", self.gaugesHandler),
+                        layer=4)
+        all_sprites.add(LcarsButton(colours.PEACH, (107, 398), "WEATHER", self.weatherHandler),
+                        layer=4)
+        all_sprites.add(LcarsButton(colours.PEACH, (108, 536), "HOME", self.homeHandler),
+                        layer=4)
 
-        all_sprites.add(self.butt1, layer=5)
-        all_sprites.add(self.butt2, layer=5)
-        all_sprites.add(self.butt3, layer=5)
-        all_sprites.add(self.butt4, layer=5)
+        # gadgets
+        all_sprites.add(LcarsGifImage("assets/gadgets/fwscan.gif", (277, 556), 100), layer=1)
 
-        campos = (270, 320)
-        self.buttcam = LcarsButton((204, 102, 102), campos, "KITTY CAM",
-                                   self.camHandler)
-        all_sprites.add(self.buttcam, layer=4)
+        self.sensor_gadget = LcarsGifImage("assets/gadgets/lcars_anim2.gif", (235, 150), 100)
+        self.sensor_gadget.visible = False
+        all_sprites.add(self.sensor_gadget, layer=2)
 
-        # Local (intranet) MQTT server setup; Hopefully we can can start
-        #   with the current values already there if all is well with MQTT
-        self.client = mqtt.Client()
-        self.client.on_connect = self.on_connect
-        self.client.on_message = self.on_message
-        self.client.username_pw_set("WeatherduinoUser", "rainyday")
-        self.client.connect("192.168.1.42", 1883, 60)
+        self.dashboard = LcarsImage("assets/gadgets/dashboard.png", (187, 232))
+        self.dashboard.visible = False
+        all_sprites.add(self.dashboard, layer=2)
 
-        # Non-blocking call that processes network traffic, dispatches
-        #   callbacks and handles reconnecting.  Must call client.loop_stop()
-        #   when you're done with stuff.
-        self.client.loop_start()
+        self.weather = LcarsImage("assets/weather.jpg", (188, 122))
+        self.weather.visible = False
+        all_sprites.add(self.weather, layer=2)
 
-        if self.temperature != -9999:
-            self.paramStr = self.tStr
-            # Note: We need to explicitly update the strings since they're
-            #   caught in the time loop and may lag
-            self.updateDisplayedSensorStrings()
-
-        # Highlight the default choice so we know where we are and trigger
-        self.butt1.changeColor(colours.WHITE)
-        self.butt2.changeColor(self.butt2.inactiveColor)
-        self.butt3.changeColor(self.butt3.inactiveColor)
-        self.butt4.changeColor(self.butt4.inactiveColor)
-
-        # Automatically control screen brightness at start?
-        self.autosbrightness = True
-        self.buttonAuto.changeColor(colours.WHITE)
-
+        #all_sprites.add(LcarsMoveToMouse(colours.WHITE), layer=1)
+        self.beep1 = Sound("assets/audio/panel/201.wav")
+        Sound("assets/audio/panel/220.wav").play()
 
     def update(self, screenSurface, fpsClock):
         if pygame.time.get_ticks() - self.lastClockUpdate > 1000:
@@ -181,27 +135,7 @@ class ScreenMain(LcarsScreen):
 
         LcarsScreen.update(self, screenSurface, fpsClock)
 
-        # Update the heartbeat indicator(s)
-        self.beatCounterDT = (dt.datetime.now() - self.timestampDT)
-        self.beatCounter = self.beatCounterDT.total_seconds()
-        # Heartbeat bar for whether we read the timestamp remotely correctly
-        if self.beatCounter > self.beatWarningTime:
-            self.beatColor = (255, 0, 0)
-        else:
-            self.beatColor = (0, 255, 0)
-
-        # Changing text color depending on time of last good (outdoor) read
-        if ((dt.datetime.now() - self.whenLastRead).total_seconds()) > self.beatWarningTime*2.:
-            # Warning text color
-            self.paramValueText.changeColour((204, 102, 102))
-        else:
-            # Normal text color
-            self.paramValueText.changeColour((255, 204, 153))
-        self.curHeartbeat(screenSurface)
-
     def handleEvents(self, event, fpsClock):
-        LcarsScreen.handleEvents(self, event, fpsClock)
-
         if event.type == pygame.MOUSEBUTTONDOWN:
 #            self.beep1.play()
             pass
@@ -209,200 +143,41 @@ class ScreenMain(LcarsScreen):
         if event.type == pygame.MOUSEBUTTONUP:
             return False
 
-    def autoBrightHandler(self, item, event, clock):
-        if self.autosbrightness is True:
-            self.autosbrightness = False
-            self.buttonAuto.changeColor(colours.BLUE)
-        else:
-            self.autosbrightness = True
-            self.buttonAuto.changeColor(colours.WHITE)
-            try:
-                # First read/scale the last value from the sensor
-                self.theLuxRanger()
-                print("setting to %f" % (self.sbrightness))
-                self.screenBrightAbsolute()
-            except:
-                # If we're here, something went wrong
-                #   but I don't know what to say yet
-                print("Whoops")
-                pass
+    def hideInfoText(self):
+        if self.info_text[0].visible:
+            for sprite in self.info_text:
+                sprite.visible = False
 
-    def camHandler(self, item, event, clock):
-        try:
-            if self.runningCam is False:
-                self.runningCam = True
-                sub.call(self.cmdCamGo)
-            else:
-                self.runningCam = False
-                sub.call(self.cmdCamStop)
-        except OSError:
-            pass
+    def showInfoText(self):
+        for sprite in self.info_text:
+            sprite.visible = True
 
-    def screenBrightAbsolute(self):
-        try:
-            screenPWM.screenPWM(self.sbrightness, pin=18)
-        except OSError:
-            print("Failure to set screen brightness to %f" % \
-                (self.sbrightness))
-            self.autosbrightness = False
+    def gaugesHandler(self, item, event, clock):
+        self.hideInfoText()
+        self.sensor_gadget.visible = False
+        self.dashboard.visible = True
+        self.weather.visible = False
 
-    def screenBrighterHandler(self, item, event, clock):
-        try:
-            self.sbrightness += 0.1
-            if self.sbrightness < 0.1:
-                self.sbrightness = 0.1
-            if self.sbrightness > 1.0:
-                self.sbrightness = 1.0
-            screenPWM.screenPWM(self.sbrightness, pin=18)
-        except OSError:
-            pass
+    def sensorsHandler(self, item, event, clock):
+        self.hideInfoText()
+        self.sensor_gadget.visible = True
+        self.dashboard.visible = False
+        self.weather.visible = False
 
-    def screenDimmerHandler(self, item, event, clock):
-        try:
-            self.sbrightness -= 0.1
-            if self.sbrightness < 0.1:
-                self.sbrightness = 0.1
-            if self.sbrightness > 1.0:
-                self.sbrightness = 1.0
-            screenPWM.screenPWM(self.sbrightness, pin=18)
-        except OSError:
-            pass
+    def weatherHandler(self, item, event, clock):
+        self.hideInfoText()
+        self.sensor_gadget.visible = False
+        self.dashboard.visible = False
+        self.weather.visible = True
 
-    def cTempHandler(self, item, event, clock):
-        self.displayedValue = "Temp"
-        self.paramStr = self.tStr
-        self.updateDisplayedSensorStrings()
-        self.butt1.changeColor(colours.WHITE)
-        self.butt2.changeColor(self.butt2.inactiveColor)
-        self.butt3.changeColor(self.butt3.inactiveColor)
-        self.butt4.changeColor(self.butt4.inactiveColor)
-
-    def cPressHandler(self, item, event, clock):
-        self.displayedValue = "Pre"
-        self.paramStr = self.pStr
-        self.updateDisplayedSensorStrings()
-        self.butt1.changeColor(self.butt1.inactiveColor)
-        self.butt2.changeColor(colours.WHITE)
-        self.butt3.changeColor(self.butt3.inactiveColor)
-        self.butt4.changeColor(self.butt4.inactiveColor)
-
-    def cHumiHandler(self, item, event, clock):
-        self.displayedValue = "Humi"
-        self.paramStr = self.hStr
-        self.updateDisplayedSensorStrings()
-        self.butt1.changeColor(self.butt1.inactiveColor)
-        self.butt2.changeColor(self.butt2.inactiveColor)
-        self.butt3.changeColor(colours.WHITE)
-        self.butt4.changeColor(self.butt4.inactiveColor)
-
-    def cPowerHandler(self, item, event, clock):
-        self.displayedValue = "Powr"
-        self.paramStr = self.pwrStr
-        self.updateDisplayedSensorStrings()
-        self.butt1.changeColor(self.butt1.inactiveColor)
-        self.butt2.changeColor(self.butt2.inactiveColor)
-        self.butt3.changeColor(self.butt3.inactiveColor)
-        self.butt4.changeColor(colours.WHITE)
-
+    def homeHandler(self, item, event, clock):
+        self.showInfoText()
+        self.sensor_gadget.visible = False
+        self.dashboard.visible = False
+        self.weather.visible = False
+        
     def logoutHandler(self, item, event, clock):
-        from screens.blanker import ScreenBlanker
-        self.client.loop_stop()
-        self.client.unsubscribe("Ostation/#")
-        self.client.unsubscribe("Istation/#")
-        self.client.disconnect()
-
-        self.loadScreen(ScreenBlanker())
-
-    def updateDisplayedSensorStrings(self):
-        """
-        Update the sensor value and associated timestamp when demanded
-        """
-        self.paramValueText.setText(self.paramStr)
-        self.sensorTimestampText.setText(self.tsStr)
-
-    def curHeartbeat(self, screenSurface):
-        pygame.draw.rect(screenSurface, self.beatColor, (211, 98.5, 235, 14.5), 0)
-
-    def on_connect(self, client, userdata, flags, rc):
-        """
-        Callback for when the client receives a CONNACK response from server.
-        """
-        print("Connected with result code "+str(rc))
-
-        # Subscribing in on_connect() means that if we lose the connection and
-        #   reconnect then subscriptions will be renewed.
-        #   The character '#' is a wildcard meaning all.
-        #client.subscribe("Ostation/#")
-        client.subscribe("/WeatherStation/Outside")
-        client.subscribe("Istation/lux")
-
-    def on_message(self, client, userdata, msg):
-        """
-        Callback for when a PUBLISH message is received from the server.
-        """
-        print(msg.payload)
-
-        if msg.topic.find("/WeatherStation/Outside") > -1:
-            payStr = msg.payload.decode("UTF-8").replace("'", "\"")
-            pay = json.loads(payStr)
-            print(pay)
-            self.temperature = float(pay['Temperature'])
-            self.tStr = "%02.1f C | %02.1f F" % (self.temperature,
-                                                     CtoF(self.temperature))
-            print("Update", self.tStr)
-            self.whenLastRead = dt.datetime.now()
-
-            self.pressure = float(pay['Pressure'])
-            self.pStr = "%04.2f mB" % (self.pressure)
-            print("Update", self.pStr)
+        from screens.authorize import ScreenAuthorize
+        self.loadScreen(ScreenAuthorize())
 
 
-            self.humidity = float(pay['Humidity'])
-            self.hStr = "%03.0f %%" % (self.humidity)
-            print("Update", self.hStr)
-
-            self.battery = float(pay['Battery'])
-            self.pwrStr = "%01.2f V" % (self.battery)
-            print("Update", self.pwrStr)
-
-            sDateFmt = "%d%m.%y %H:%M:%S"
-            # self.timestamp = np.int(msg.payload)
-            # self.timestampDT = datetime.fromtimestamp(self.timestamp)
-            # sDate = "{}".format(self.timestampDT.strftime(sDateFmt))
-            # self.tsStr = "Last Update: %s" % (sDate)
-            # print("Update", self.tsStr)
-
-            # Display string updates
-            if self.displayedValue == "Temp":
-                self.paramStr = self.tStr
-            if self.displayedValue == "Pres":
-                self.paramStr = self.pStr
-            if self.displayedValue == "Humi":
-                self.paramStr = self.hStr
-            if self.displayedValue == "Powr":
-                self.paramStr = self.pwrStr
-        elif msg.topic.find("Istation") > -1:
-            if msg.topic.find("lux") > -1:
-                self.lux = float(msg.payload)
-                if self.autosbrightness is True:
-                    self.theLuxRanger()
-                    self.screenBrightAbsolute()
-
-        self.updateDisplayedSensorStrings()
-
-    def theLuxRanger(self):
-        # Turn the lux into a brightness value
-        #   >  xr == full brightness
-        #   <  mr == min brightness
-        # Screen range - 1.0 to 0.2 inclusive
-        mr = 3.
-        xr = 100.
-        if self.lux >= xr:
-            self.sbrightness = 1.0
-        elif self.lux < xr and self.lux >= mr:
-            self.sbrightness = ((self.lux - mr)*(1.0 - 0.2)/(xr - mr)) + 0.2
-            self.sbrightness = np.round(self.sbrightness, 3)
-        else:
-            self.sbrightness = 0.05
-
-        print("Lux: ", self.lux, self.sbrightness)

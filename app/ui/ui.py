@@ -4,26 +4,26 @@ from pygame.locals import *
 from .touch_input import TouchListener
 
 
+from ui.utils import sound
+
+
 class UserInterface:
-    def __init__(self, screen, resolution=(480,320), 
-                 ui_placement_mode=False, fps=60, dev_mode=False,
-                 audio=(22050, -8, 1, 1024)):
+    def __init__(self, screen, resolution=(800,480),
+                 ui_placement_mode=False, fps=60, dev_mode=False, audio=True,
+                 audio_params=(22050, -8, 1, 1024)):
         # init system
-
-        pygame.mixer.init(audio[0], audio[1], audio[2], audio[3])
+        pygame.display.init()
         pygame.font.init()
-        pygame.init()
-        
-        # Make the resolution accessible everywhere
-        self.resolution = resolution
+        sound.init(audio_params)
 
-        self.screenSurface = pygame.display.set_mode(resolution) 
-#       self.screenSurface = pygame.display.set_mode(resolution, 
-#                                                    pygame.FULLSCREEN)
+        self.screenSurface = pygame.display.set_mode(resolution) #, pygame.FULLSCREEN)
         self.fpsClock = pygame.time.Clock()
         self.fps = fps
         pygame.display.set_caption("LCARS")
-        if not dev_mode: pygame.mouse.set_visible(False)
+        if not dev_mode: 
+            # see https://github.com/tobykurien/rpi_lcars/issues/9
+            #pygame.mouse.set_visible(False)
+            pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
         
         # set up screen elements
         self.all_sprites = pygame.sprite.LayeredDirty()
