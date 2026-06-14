@@ -13,6 +13,7 @@ class TouchListener:
         self.height = height
         self.device = None
         self.call_count = 0
+        self._touching = False  # track last touch state
         
         try:
             self.device = evdev.InputDevice(self.device_path)
@@ -36,14 +37,21 @@ class TouchListener:
                             self.last_y = event.value
                     elif event.type == ecodes.EV_KEY:
                         if event.code == ecodes.BTN_TOUCH:
-                            # Simple linear mapping: raw 0-4095 -> screen 0-width/height
-                            scaled_x = int((self.last_x / 4095.0) * self.width)
-                            scaled_y = int((self.last_y / 4095.0) * self.height)
-                            if DEBUG:
-                                print(f"Touch: raw ({self.last_x}, {self.last_y}) -> screen ({scaled_x}, {scaled_y})")
-                            if event.value == 1:  # Press
+                            if event.value == 1 and not self._touching:
+                                # New touch
+                                self._touching = True
+                                scaled_x = int((self.last_x / 4095.0) * self.width)
+                                scaled_y = int((self.last_y / 4095.0) * self.height)
+                                if DEBUG:
+                                    print(f"Touch down: raw ({self.last_x}, {self.last_y}) -> screen ({scaled_x}, {scaled_y})")
                                 events.append(pygame.event.Event(pygame.MOUSEBUTTONDOWN, {'pos': (scaled_x, scaled_y), 'button': 1}))
-                            elif event.value == 0:  # Release
+                            elif event.value == 0 and self._touching:
+                                # Touch released
+                                self._touching = False
+                                scaled_x = int((self.last_x / 4095.0) * self.width)
+                                scaled_y = int((self.last_y / 4095.0) * self.height)
+                                if DEBUG:
+                                    print(f"Touch up: raw ({self.last_x}, {self.last_y}) -> screen ({scaled_x}, {scaled_y})")
                                 events.append(pygame.event.Event(pygame.MOUSEBUTTONUP, {'pos': (scaled_x, scaled_y), 'button': 1}))
         except Exception as e:
             print(f"Error reading touch events: {e}")

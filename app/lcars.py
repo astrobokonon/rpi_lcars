@@ -7,7 +7,7 @@ from screens.main import ScreenMain
 # global config
 UI_PLACEMENT_MODE = True
 RESOLUTION = (480, 320)
-FPS = 25
+FPS = 30
 DEV_MODE = True
 
 
